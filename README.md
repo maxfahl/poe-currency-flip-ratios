@@ -2,6 +2,8 @@
 
 A very simple node script for helping with currency flipping. It scrapes the poe trade site for sell/buy values of a certain currency. It has only been tested on my mac on "Big Sur".
 
+It currently gets prices for rows 16 to 24, returning the mean value for those buy/sell values.
+
 Prerequisits: Chrome version 88 (needs to be installed on computer)
 
 Install: `yarn install`
