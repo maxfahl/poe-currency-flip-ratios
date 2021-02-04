@@ -1,6 +1,6 @@
 # poe-currency-pricings
 
-A very simple node script for helping with currency flipping. It scrapes the poe trade site for sell/buy values of a certain currency.
+A very simple node script for helping with currency flipping. It scrapes the poe trade site for sell/buy values of a certain currency. It has only been tested on my mac on "Big Sur".
 
 Prerequisits: Chrome version 88 (needs to be installed on computer)
 
