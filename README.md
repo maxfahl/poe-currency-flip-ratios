@@ -7,8 +7,10 @@ It currently gets prices for rows 16 to 24, returning the mean value for those b
 Prerequisits: Chrome version 88 (needs to be installed on computer)
 
 Install: `yarn install`
+
 Run: `node ./poe-currency-pricings.js ...currencies`
-Example `node ./poe-currency-pricings.js chromatic cartographer`
+
+Example: `node ./poe-currency-pricings.js chromatic cartographer`
 
 Supported currencies are: chromatic, cartographer, fusing, chance, alchemy and exalted
 
