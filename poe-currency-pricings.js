@@ -1,5 +1,6 @@
 const { Builder, By, until } = require('selenium-webdriver');
-require('selenium-webdriver/chrome');
+const chrome = require('selenium-webdriver/chrome');
+const chromedriver = require('chromedriver');
 const cheerio = require('cheerio');
 
 class CurrencyPricings {

@@ -5,6 +5,7 @@
 	"license": "MIT",
 	"dependencies": {
 		"cheerio": "^1.0.0-rc.5",
+		"chromedriver": "^88.0.0",
 		"selenium-webdriver": "^4.0.0-alpha.8"
 	}
 }
