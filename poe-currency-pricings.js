@@ -112,8 +112,8 @@ class CurrencyPricingRunner {
 		];
 
 		let prices;
-
 		try {
+			console.log(`Fetching ratios for "${ this.currency }"`);
 			prices = await Promise.all([
 				fetchers[0].go(),
 				fetchers[1].go(),
@@ -128,7 +128,9 @@ class CurrencyPricingRunner {
 		out += `${prices[0][1]}/${prices[0][0]}\n`;
 		out += `chaos > ${this.currency}\n`;
 		out += `${prices[1][1]}/${prices[1][0]}\n`;
-		const profit = Math.round((prices[1][0] / prices[1][1]) / (prices[0][1] / prices[0][0]) * 1000) / 1000;
+		const chaosPerCurrency = prices[0][1] / prices[0][0];
+		const currencyPerChaos = prices[1][0] / prices[1][1];
+		const profit = Math.round((chaosPerCurrency / currencyPerChaos - 1) * 100);
 		out += `Profit: ${ profit }%`;
 		return out;
 	}
@@ -169,7 +171,7 @@ class CurrencyPriceFetcher {
 				payPrices: []
 			};
 			const startPrice = 18;
-			const numPrices = 5;
+			const numPrices = 4;
 			const rows = $('.row.exchange').slice(startPrice, startPrice + numPrices);
 			rows.each((i, elem) => {
 				const row = $(elem);
