@@ -73,7 +73,6 @@ class CurrencyPricings {
 
 	async priceNext() {
 		const nextRunner = this.runners[this.currentRunner];
-		console.log('Price next', this.currentRunner, nextRunner);
 		if (nextRunner) {
 			let info;
 			try {
@@ -147,7 +146,6 @@ class CurrencyPriceFetcher {
 		try {
 			await driver.get(`https://www.pathofexile.com/trade/exchange/Ritual/${this.link}`);
 
-			console.log('Getting prices from poe trade');
 			await driver.wait(until.elementLocated(By.className('row exchange')), 6000);
 			let exchangeEls = await driver.findElements(By.className('row exchange'));
 			const firstExchangeElsCount = exchangeEls.length;
@@ -157,7 +155,6 @@ class CurrencyPriceFetcher {
 			// await driver.wait(until.elementIsEnabled(loadMoreButton), 2000);
 			await driver.wait(until.elementTextIs(loadMoreButton, 'Load More'), 2000);
 			await loadMoreButton.click();
-			console.log('Load more button clicked');
 			await driver.wait(() => {
 				return driver.findElements(By.className('row exchange')).then((elements) => {
 					return elements.length !== firstExchangeElsCount;
