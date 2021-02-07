@@ -1,7 +1,8 @@
 const { Builder, By, until } = require('selenium-webdriver');
-const chrome = require('selenium-webdriver/chrome');
-const chromedriver = require('chromedriver');
 const cheerio = require('cheerio');
+
+require('selenium-webdriver/chrome');
+require('chromedriver');
 
 class CurrencyPricings {
 	static CURRENCIES = {
@@ -25,6 +26,22 @@ class CurrencyPricings {
 			'yYYOiR',
 			'rPe7CQ'
 		],
+		gemcutters: [
+			'ADa4f5',
+			'18jvcV'
+		],
+		regret: [
+			'zbJai4',
+			'9z6ztK'
+		],
+		vaal: [
+			'18GVuV',
+			'EB9LC5'
+		],
+		divine: [
+			'9z28fK',
+			'NpeJc0'
+		],
 		exalted: [
 			'Nn8Vt0',
 			'12R5ck'
@@ -44,20 +61,36 @@ class CurrencyPricings {
 				)
 			)
 		});
-		this.priceNext();
+	}
+
+	async start() {
+		return await this.priceNext();
 	}
 
 	async priceNext() {
 		const nextRunner = this.runners[this.currentRunner];
+		console.log('Price next', this.currentRunner, nextRunner);
 		if (nextRunner) {
-			const info = await nextRunner.go();
+			let info;
+			try {
+				info = await nextRunner.go();
+			} catch(err) {
+				console.log('Rate limit exceeded, retrying in 60 seconds.');
+				return new Promise(resolve => {
+					setTimeout(
+						() => resolve(this.priceNext()),
+						60000
+					); // Try again in a minute
+				});
+			}
 			this.result += `${info}\n\n`;
 		} else {
-			console.log(this.result);
-			return;
+			let driver = await CurrencyPriceFetcher.createDriver();
+			driver.quit(); // Close all drivers for now.
+			return this.result;
 		}
 		this.currentRunner++;
-		this.priceNext();
+		return this.priceNext();
 	}
 }
 
@@ -75,25 +108,25 @@ class CurrencyPricingRunner {
 			new CurrencyPriceFetcher(this.links[1])
 		];
 
-		// const prices = await fetchers.reduce((promiseChain, fetcher) => {
-		// 	return promiseChain.then(chainResults =>
-		// 		fetcher.go().then(currentResult =>
-		// 			[...chainResults, currentResult]
-		// 		)
-		// 	);
-		// }, Promise.resolve([]));
+		let prices;
 
-		const prices = await Promise.all([
-			fetchers[0].go(),
-			fetchers[1].go(),
-		]);
+		try {
+			prices = await Promise.all([
+				fetchers[0].go(),
+				fetchers[1].go(),
+			]);
+		} catch(err) {
+			let driver = await CurrencyPriceFetcher.createDriver();
+			driver.quit(); // Close all drivers for now.
+			throw new Error('Could not fetch prices, rate limit probably exceeded.');
+		}
 
 		let out = `${this.currency} > chaos\n`;
 		out += `${prices[0][1]}/${prices[0][0]}\n`;
 		out += `chaos > ${this.currency}\n`;
 		out += `${prices[1][1]}/${prices[1][0]}\n`;
-		out += `Profit: ${Math.round((prices[1][1] / prices[1][0]) / (prices[0][0] / prices[0][1]) * 10) / 10}%`;
-
+		const profit = Math.round((prices[1][0] / prices[1][1]) / (prices[0][1] / prices[0][0]) * 1000) / 1000;
+		out += `Profit: ${ profit }%`;
 		return out;
 	}
 }
@@ -110,15 +143,17 @@ class CurrencyPriceFetcher {
 		try {
 			await driver.get(`https://www.pathofexile.com/trade/exchange/Ritual/${this.link}`);
 
+			console.log('Getting prices from poe trade');
 			await driver.wait(until.elementLocated(By.className('row exchange')), 6000);
 			let exchangeEls = await driver.findElements(By.className('row exchange'));
 			const firstExchangeElsCount = exchangeEls.length;
 
 			const loadMoreButton = await driver.findElement(By.className('load-more-btn'));
 
-			await driver.wait(until.elementIsEnabled(loadMoreButton), 6000);
-			await driver.wait(until.elementTextIs(loadMoreButton, 'Load More'), 6000);
+			// await driver.wait(until.elementIsEnabled(loadMoreButton), 2000);
+			await driver.wait(until.elementTextIs(loadMoreButton, 'Load More'), 2000);
 			await loadMoreButton.click();
+			console.log('Load more button clicked');
 			await driver.wait(() => {
 				return driver.findElements(By.className('row exchange')).then((elements) => {
 					return elements.length !== firstExchangeElsCount;
@@ -132,8 +167,8 @@ class CurrencyPriceFetcher {
 				getPrices: [],
 				payPrices: []
 			};
-			const startPrice = 16;
-			const numPrices = 8;
+			const startPrice = 18;
+			const numPrices = 5;
 			const rows = $('.row.exchange').slice(startPrice, startPrice + numPrices);
 			rows.each((i, elem) => {
 				const row = $(elem);
@@ -171,7 +206,7 @@ class CurrencyPriceFetcher {
 	static async createDriver() {
 		const chromeOptions = {
 			// w3c: false,
-			// binary: '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+			binary: '/Applications/Chromium.app/Contents/MacOS/Chromium',
 			args: [
 				"--disable-extensions",
 				"--window-size=1366,768",
@@ -193,4 +228,9 @@ class CurrencyPriceFetcher {
 	}
 }
 
-new CurrencyPricings(process.argv.slice(2));
+(async () => {
+	const currencyPricings = new CurrencyPricings(process.argv.slice(2));
+	const pricings = await currencyPricings.start();
+	console.log(pricings);
+})();
+
