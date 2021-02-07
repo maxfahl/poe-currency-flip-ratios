@@ -54,12 +54,16 @@ class CurrencyPricings {
 
 	constructor(currencies) {
 		currencies.forEach(c => {
-			this.runners.push(
-				new CurrencyPricingRunner(
-					c,
-					CurrencyPricings.CURRENCIES[c]
+			const priceLinks = CurrencyPricings.CURRENCIES[c];
+			if (priceLinks) {
+				this.runners.push(
+					new CurrencyPricingRunner(
+						c,
+						CurrencyPricings.CURRENCIES[c]
+					)
 				)
-			)
+			} else
+				console.error(`Currency "${ c }" is not supported, skipping.`);
 		});
 	}
 
