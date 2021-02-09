@@ -21,23 +21,23 @@ Other currencies can be added at the top of the script, the first string is the 
 The result will look something like this:
 
 ```
-chromatic > chaos
-4/25
-chaos > chromatic
-209/30
-Profit: 1.1%
-
-cartographer > chaos
-16/53
-chaos > cartographer
-31/9
-Profit: 1%
-
 fusing > chaos
-1/4
+17/81
 chaos > fusing
-151/35
-Profit: 1.1%
+49/10
+Profit: 3%
+
+chance > chaos
+7/78
+chaos > chance
+14/1
+Profit: 26%
+
+alchemy > chaos
+4/29
+chaos > alchemy
+81/10
+Profit: 12%
 ```
 
 "fusing > chaos 1/4" means that you should price a fusing in your premium stash tab "1/4" of a chaos. "chaos > fusing 151/35" mean you should price a chaos for "151/35" of a fusing. All trades will give a profit margin for that trade.
