@@ -83,6 +83,7 @@ class CurrencyPricings {
 	currentRunner = 0;
 	runners = [];
 	result = '';
+	retryCount = 0;
 
 	constructor(
 		currencies,
@@ -117,8 +118,10 @@ class CurrencyPricings {
 			let info;
 			try {
 				info = await nextRunner.go();
+				this.retryCount = 0;
 			} catch(err) {
-				console.log('Rate limit exceeded, retrying in 60 seconds.');
+				this.retryCount++;
+				console.log(`Rate limit exceeded, trying again in 60 seconds (${ this.retryCount }).`);
 				return new Promise(resolve => {
 					setTimeout(
 						() => resolve(this.priceNext()),
@@ -206,6 +209,7 @@ class CurrencyPricingRunner {
 			out += `Profit: ${ priceInfo.profit }% (~row ${ this.startrow + rowNum + 1 })`;
 		if (noProfitBelow)
 			out += `\n(Could not find row pairs matching a maxprofit of ${ this.maxprofit }%)`;
+
 		return out;
 	}
 
@@ -216,7 +220,6 @@ class CurrencyPricingRunner {
 	) {
 		const sellRatio = currencyToChaos.sellPrices[row] / currencyToChaos.buyPrices[row];
 		const buyRatio = chaosToCurrency.buyPrices[row] / chaosToCurrency.sellPrices[row];
-		console.log();
 		const profit = Math.round((buyRatio / sellRatio - 1) * 100);
 
 		const info = {
