@@ -42,6 +42,10 @@ class CurrencyPricings {
 			'18GVuV',
 			'EB9LC5'
 		],
+		scour: [
+			'rbdMHQ',
+			'EBEzt5'
+		],
 		divine: [
 			'9z28fK',
 			'NpeJc0'
