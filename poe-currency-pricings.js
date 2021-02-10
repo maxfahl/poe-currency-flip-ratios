@@ -30,7 +30,7 @@ class CurrencyPricings {
 			'yYYOiR',
 			'rPe7CQ'
 		],
-		gemcutters: [
+		gemcutter: [
 			'ADa4f5',
 			'18jvcV'
 		],
@@ -145,7 +145,7 @@ class CurrencyPricingRunner {
 			throw new Error('Could not fetch prices, rate limit probably exceeded.');
 		}
 
-		let bestPrice = {
+		let priceInfo = {
 			sell: null,
 			buy: null,
 			profit: 0
@@ -155,33 +155,57 @@ class CurrencyPricingRunner {
 		const chaosToCurrencyPrices = prices[1];
 		let rowNum = 0;
 		for (rowNum; rowNum < currencyToChaosPrices.sellPrices.length - 1; rowNum++) {
-			const sellRatio = currencyToChaosPrices.sellPrices[rowNum] / currencyToChaosPrices.buyPrices[rowNum];
-			const buyRatio = chaosToCurrencyPrices.buyPrices[rowNum] / chaosToCurrencyPrices.sellPrices[rowNum];
-			const profit = Math.round((buyRatio / sellRatio - 1) * 100);
-
-			if (profit <= this.maxprofit) {
-				const sellMaxDivisible = this.gcd(currencyToChaosPrices.buyPrices[rowNum], currencyToChaosPrices.sellPrices[rowNum]);
-				bestPrice.sell = `${ currencyToChaosPrices.buyPrices[rowNum] }/${ currencyToChaosPrices.sellPrices[rowNum] }`
-				bestPrice.sell += ` (${ currencyToChaosPrices.buyPrices[rowNum] / sellMaxDivisible }/${ currencyToChaosPrices.sellPrices[rowNum] / sellMaxDivisible })`;
-
-				const buyMaxDivisible = this.gcd(chaosToCurrencyPrices.buyPrices[rowNum], chaosToCurrencyPrices.sellPrices[rowNum]);
-				bestPrice.buy = `${ chaosToCurrencyPrices.buyPrices[rowNum] }/${ chaosToCurrencyPrices.sellPrices[rowNum] }`;
-				bestPrice.buy += ` (${ chaosToCurrencyPrices.buyPrices[rowNum] / buyMaxDivisible }/${ chaosToCurrencyPrices.sellPrices[rowNum] / buyMaxDivisible })`;
-
-				bestPrice.profit = profit;
-			} else
+			const info = this.getPriceInfo(currencyToChaosPrices, chaosToCurrencyPrices, rowNum);
+			if (info.profit <= this.maxprofit)
+				priceInfo = info;
+			else
 				break;
 		}
 
+		let noProfitBelow = false;
+		if (!priceInfo.sell) {
+			noProfitBelow = true;
+			priceInfo = this.getPriceInfo(currencyToChaosPrices, chaosToCurrencyPrices, 0)
+		}
+
 		let out = `\n${this.currency} > chaos\n`;
-		out += `${ bestPrice.sell }\n`;
+		out += `${ priceInfo.sell }\n`;
 		out += `chaos > ${this.currency}\n`;
-		out += `${ bestPrice.buy }\n`;
-		if (bestPrice.profit < 1)
-			out += `${ bestPrice.profit === 0 ? 'No' : 'Negative' } profit: ${ bestPrice.profit }%`;
+		out += `${ priceInfo.buy }\n`;
+		if (priceInfo.profit < 1)
+			out += `${ priceInfo.profit === 0 ? 'No' : 'Negative' } profit: ${ priceInfo.profit }%`;
 		else
-			out += `Profit: ${ bestPrice.profit }% (~row ${ this.startrow + rowNum })`;
+			out += `Profit: ${ priceInfo.profit }% (~row ${ this.startrow + rowNum + 1 })`;
+		if (noProfitBelow)
+			out += `\n(Could not find row pairs matching a maxprofit of ${ this.maxprofit }%)`;
 		return out;
+	}
+
+	getPriceInfo(
+		currencyToChaos,
+		chaosToCurrency,
+		row
+	) {
+		const sellRatio = currencyToChaos.sellPrices[row] / currencyToChaos.buyPrices[row];
+		const buyRatio = chaosToCurrency.buyPrices[row] / chaosToCurrency.sellPrices[row];
+		console.log();
+		const profit = Math.round((buyRatio / sellRatio - 1) * 100);
+
+		const info = {
+			sell: '',
+			buy: '',
+			profit: profit
+		};
+
+		const sellMaxDivisible = this.gcd(currencyToChaos.buyPrices[row], currencyToChaos.sellPrices[row]);
+		info.sell = `${ currencyToChaos.buyPrices[row] }/${ currencyToChaos.sellPrices[row] }`
+		info.sell += ` (${ currencyToChaos.buyPrices[row] / sellMaxDivisible }/${ currencyToChaos.sellPrices[row] / sellMaxDivisible })`;
+
+		const buyMaxDivisible = this.gcd(chaosToCurrency.buyPrices[row], chaosToCurrency.sellPrices[row]);
+		info.buy = `${ chaosToCurrency.buyPrices[row] }/${ chaosToCurrency.sellPrices[row] }`;
+		info.buy += ` (${ chaosToCurrency.buyPrices[row] / buyMaxDivisible }/${ chaosToCurrency.sellPrices[row] / buyMaxDivisible })`;
+
+		return info;
 	}
 
 	gcd(a, b) {

@@ -27,7 +27,7 @@ Run: `node ./poe-currency-pricings.js ...args`
 - fusing
 - chance
 - alchemy
-- gemcutters
+- gemcutter
 - regret
 - vaal
 - divine
