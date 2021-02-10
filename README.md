@@ -51,6 +51,6 @@ chaos > divine
 Profit: 5% (~row 23)
 ```
 
-"chromatic > chaos 100/690" means that you should price a chromatic in your premium stash tab "100/690" of a chaos. "chaos > fusing 370/51" mean you should price a chaos for "370/51" of a chromatic. All trades will give a profit margin for that trade, as well as an expected position. The numbers in parentheses is the maximum common divisible for that ratio, 10/69 is the same ratio as 100/690, but you will sell 69 chromatics for 10 chaos, instead of 690 chromatics for 100 chaos, which can result in more trade requests, but make less money per trade.
+"chromatic > chaos 100/690" means that you should price a chromatic in your premium stash tab "100/690" of a chaos. "chaos > chromatic 370/51" mean you should price a chaos for "370/51" of a chromatic. All trades will give a profit margin for that trade, as well as an expected position. The numbers in parentheses is the maximum common divisible for that ratio, 10/69 is the same ratio as 100/690, but you will sell 69 chromatics for 10 chaos, instead of 690 chromatics for 100 chaos, which can result in more trade requests, but make less money per trade.
 
 ##### Thanks, let me know how it works for you!
