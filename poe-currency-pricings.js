@@ -50,6 +50,26 @@ class CurrencyPricings {
 			'18GVuV',
 			'EB9LC5'
 		],
+		scour: [
+			'rbdMHQ',
+			'EBEzt5'
+		],
+		alteration: [
+			'Ny7gfR',
+			'AjnbtX'
+		],
+		blessed: [
+			'Q2Q7Cw',
+			'5n8nta'
+		],
+		regal: [
+			'EBBVC5',
+			'YpagsY'
+		],
+		glassblower: [
+			'dkpQGqqcJ',
+			'LBbWavXtn'
+		],
 		divine: [
 			'9z28fK',
 			'NpeJc0'
