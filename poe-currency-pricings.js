@@ -2,11 +2,19 @@
 
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
-const { Builder, By, until } = require('selenium-webdriver');
+const { Capabilities, Builder, By, until } = require('selenium-webdriver');
+const { Options } = require('selenium-webdriver/chrome');
 const cheerio = require('cheerio');
+const chrome = require('selenium-webdriver/chrome');
+const wdLogging = require('selenium-webdriver/lib/logging');
 
-require('selenium-webdriver/chrome');
 require('chromedriver');
+
+// Disable webdriver logging.
+const loggingPrefs = new wdLogging.Preferences();
+for (const logType in wdLogging.Type) {
+    loggingPrefs.setLevel(logType, wdLogging.Level.OFF);
+}
 
 class CurrencyPricings {
 	static CURRENCIES = {
@@ -278,26 +286,13 @@ class CurrencyPriceFetcher {
 	}
 
 	static async createDriver() {
-		const chromeOptions = {
-			// w3c: false,
-			// binary: '/Applications/Chromium.app/Contents/MacOS/Chromium',
-			args: [
-				"--disable-extensions",
-				"--window-size=1366,768",
-				"--no-sandbox",
-				"--headless",
-			]
-		};
-
-		const chromeCapabilities = {
-			browserName: 'chrome',
-			// version: 'latest',
-			chromeOptions: chromeOptions
-		};
+		let options = new Options();
+		options.headless();
+		options.excludeSwitches('enable-logging')
 
 		return new Builder()
 			.forBrowser('chrome')
-			.withCapabilities(chromeCapabilities)
+			.setChromeOptions(options)
 			.build();
 	}
 }
@@ -329,4 +324,3 @@ class CurrencyPriceFetcher {
 	const pricings = await currencyPricings.start();
 	console.log(pricings);
 })();
-
