@@ -88,8 +88,8 @@ class CurrencyPricings {
 			}
 			this.result += `${info}\n\n`;
 		} else {
-			let driver = await CurrencyPriceFetcher.createDriver();
-			driver.quit(); // Close all drivers for now.
+			// let driver = await CurrencyPriceFetcher.createDriver();
+			// driver.quit(); // Close all drivers for now.
 			return this.result;
 		}
 		this.currentRunner++;
@@ -119,20 +119,53 @@ class CurrencyPricingRunner {
 				fetchers[1].go(),
 			]);
 		} catch(err) {
-			let driver = await CurrencyPriceFetcher.createDriver();
-			driver.quit(); // Close all drivers for now.
+			// let driver = await CurrencyPriceFetcher.createDriver();
+			// driver.quit(); // Close all drivers for now.
 			throw new Error('Could not fetch prices, rate limit probably exceeded.');
 		}
 
+		// const prices = [{"sellPrices":[21,21,7,21,70,1115,340,48,136,68,136,170,68,680,340,68,142,270],"buyPrices":[3,3,1,3,10,160,49,7,20,10,20,25,10,100,50,10,21,40]},{"sellPrices":[13,38,5,10,10,10,20,5,5,40,60,13,50,2,2,10,10,10],"buyPrices":[93,272,36,72,72,72,144,36,36,290,435,95,370,15,15,75,75,75]}];
+
+		let bestPrice = {
+			sell: null,
+			buy: null,
+			profit: 0
+		};
+
+		const currencyToChaosPrices = prices[0];
+		const chaosToCurrencyPrices = prices[1];
+		for (let i = 0; i < currencyToChaosPrices.sellPrices.length; i++) {
+			const sellRatio = currencyToChaosPrices.sellPrices[i] / currencyToChaosPrices.buyPrices[i];
+			const buyRatio = chaosToCurrencyPrices.buyPrices[i] / chaosToCurrencyPrices.sellPrices[i];
+			const profit = Math.round((buyRatio / sellRatio - 1) * 100);
+
+			if (profit <= 10 /* Min profit */) {
+				const sellMaxDivisible = this.gcd(currencyToChaosPrices.buyPrices[i], currencyToChaosPrices.sellPrices[i]);
+				bestPrice.sell = `${ currencyToChaosPrices.buyPrices[i] }/${ currencyToChaosPrices.sellPrices[i] }`
+				bestPrice.sell += ` (${ currencyToChaosPrices.buyPrices[i] / sellMaxDivisible }/${ currencyToChaosPrices.sellPrices[i] / sellMaxDivisible })`;
+
+				const buyMaxDivisible = this.gcd(chaosToCurrencyPrices.buyPrices[i], chaosToCurrencyPrices.sellPrices[i]);
+				bestPrice.buy = `${ chaosToCurrencyPrices.buyPrices[i] }/${ chaosToCurrencyPrices.sellPrices[i] }`;
+				bestPrice.buy += ` (${ chaosToCurrencyPrices.buyPrices[i] / buyMaxDivisible }/${ chaosToCurrencyPrices.sellPrices[i] / buyMaxDivisible })`;
+
+				bestPrice.profit = profit;
+			} else
+				break;
+		}
+
 		let out = `${this.currency} > chaos\n`;
-		out += `${prices[0][1]}/${prices[0][0]}\n`;
+		out += `${ bestPrice.sell }\n`;
 		out += `chaos > ${this.currency}\n`;
-		out += `${prices[1][1]}/${prices[1][0]}\n`;
-		const chaosPerCurrency = prices[0][1] / prices[0][0];
-		const currencyPerChaos = prices[1][0] / prices[1][1];
-		const profit = Math.round((chaosPerCurrency / currencyPerChaos - 1) * 100);
-		out += `Profit: ${ profit }%`;
+		out += `${ bestPrice.buy }\n`;
+		out += `Profit: ${ bestPrice.profit }%`;
 		return out;
+	}
+
+	gcd(a, b) {
+		if (!b)
+			return a;
+
+		return this.gcd(b, a % b);
 	}
 }
 
@@ -166,44 +199,41 @@ class CurrencyPriceFetcher {
 			const pageSource = await driver.getPageSource();
 			const $ = cheerio.load(pageSource);
 
-			const prices = {
-				getPrices: [],
-				payPrices: []
+			const result = {
+				sellPrices: [],
+				buyPrices: []
 			};
-			const startPrice = 18;
-			const numPrices = 4;
-			const rows = $('.row.exchange').slice(startPrice, startPrice + numPrices);
+			const skipPrices = 8;
+			const maxPrices = 18;
+			let rows = $('.row.exchange');
+			rows = rows.slice(
+				skipPrices,
+				maxPrices ? skipPrices + maxPrices : rows.length - 1
+			);
 			rows.each((i, elem) => {
 				const row = $(elem);
 				const priceBlocks = row.find('.price-block');
-				const getBlock = $(priceBlocks.get(0));
-				const payBlock = $(priceBlocks.get(1));
-				const getPrice = getBlock.find('span').last();
-				const payPrice = payBlock.find('span').first();
-				prices.getPrices.push(+getPrice.text());
-				prices.payPrices.push(+payPrice.text());
+				const sellBlock = $(priceBlocks.get(0));
+				const buyBlock = $(priceBlocks.get(1));
+				const sellPrice = sellBlock.find('span').last();
+				const buyPrice = buyBlock.find('span').first();
+				result.sellPrices.push(+sellPrice.text());
+				result.buyPrices.push(+buyPrice.text());
 			});
 
-			const sumGetPrices = prices.getPrices.reduce((a, b) => a + b, 0);
-			const sumPayPrices = prices.payPrices.reduce((a, b) => a + b, 0);
-			const out = [
-				Math.round(sumGetPrices / numPrices),
-				Math.round(sumPayPrices / numPrices)
-			];
-			const divisible = this.gcd(...out);
-			return out.map(n => n / divisible);
+			// const sumSellPrices = prices.sellPrices.reduce((a, b) => a + b, 0);
+			// const sumBuyPrices = prices.buyPrices.reduce((a, b) => a + b, 0);
+			// const out = [
+			// 	Math.round(sumSellPrices / numPrices),
+			// 	Math.round(sumBuyPrices / numPrices)
+			// ];
+			// const divisible = this.gcd(...out);
+			// return out.map(n => n / divisible);
+			return result;
 
 		} finally {
 			await driver.close();
 		}
-	}
-
-	gcd(a, b) {
-		if (!b) {
-			return a;
-		}
-
-		return this.gcd(b, a % b);
 	}
 
 	static async createDriver() {
