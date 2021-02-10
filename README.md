@@ -30,6 +30,10 @@ Run: `node ./poe-currency-pricings.js ...args`
 - gemcutter
 - regret
 - vaal
+- alteration
+- blessed
+- regal
+- glassblower
 - divine
 - exalted
 
