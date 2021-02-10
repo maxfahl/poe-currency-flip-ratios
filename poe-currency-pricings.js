@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers')
 const { Builder, By, until } = require('selenium-webdriver');
 const cheerio = require('cheerio');
 
@@ -52,13 +56,21 @@ class CurrencyPricings {
 	runners = [];
 	result = '';
 
-	constructor(currencies) {
+	constructor(
+		currencies,
+		maxprofit,
+		startrow,
+		maxrow
+	) {
 		currencies.forEach(c => {
 			const priceLinks = CurrencyPricings.CURRENCIES[c];
 			if (priceLinks) {
 				this.runners.push(
 					new CurrencyPricingRunner(
 						c,
+						maxprofit,
+						startrow,
+						maxrow,
 						CurrencyPricings.CURRENCIES[c]
 					)
 				)
@@ -86,10 +98,10 @@ class CurrencyPricings {
 					); // Try again in a minute
 				});
 			}
-			this.result += `${info}\n\n`;
+			this.result += `${info}\n`;
 		} else {
-			// let driver = await CurrencyPriceFetcher.createDriver();
-			// driver.quit(); // Close all drivers for now.
+			let driver = await CurrencyPriceFetcher.createDriver();
+			driver.quit(); // Close all drivers.
 			return this.result;
 		}
 		this.currentRunner++;
@@ -100,8 +112,17 @@ class CurrencyPricings {
 
 class CurrencyPricingRunner {
 
-	constructor(currency, links) {
+	constructor(
+		currency,
+		maxprofit,
+		startrow,
+		maxrow,
+		links
+	) {
 		this.currency = currency;
+		this.maxprofit = maxprofit || 10;
+		this.startrow = startrow || 0;
+		this.maxrow = maxrow;
 		this.links = links;
 	}
 
@@ -113,18 +134,16 @@ class CurrencyPricingRunner {
 
 		let prices;
 		try {
-			console.log(`Fetching ratios for "${ this.currency }"`);
+			console.log(`Fetching ratios for ${ this.currency }...`);
 			prices = await Promise.all([
-				fetchers[0].go(),
-				fetchers[1].go(),
+				fetchers[0].go(this.startrow, this.maxrow),
+				fetchers[1].go(this.startrow, this.maxrow),
 			]);
 		} catch(err) {
-			// let driver = await CurrencyPriceFetcher.createDriver();
-			// driver.quit(); // Close all drivers for now.
+			let driver = await CurrencyPriceFetcher.createDriver();
+			driver.quit(); // Close all drivers for now.
 			throw new Error('Could not fetch prices, rate limit probably exceeded.');
 		}
-
-		// const prices = [{"sellPrices":[21,21,7,21,70,1115,340,48,136,68,136,170,68,680,340,68,142,270],"buyPrices":[3,3,1,3,10,160,49,7,20,10,20,25,10,100,50,10,21,40]},{"sellPrices":[13,38,5,10,10,10,20,5,5,40,60,13,50,2,2,10,10,10],"buyPrices":[93,272,36,72,72,72,144,36,36,290,435,95,370,15,15,75,75,75]}];
 
 		let bestPrice = {
 			sell: null,
@@ -134,30 +153,34 @@ class CurrencyPricingRunner {
 
 		const currencyToChaosPrices = prices[0];
 		const chaosToCurrencyPrices = prices[1];
-		for (let i = 0; i < currencyToChaosPrices.sellPrices.length; i++) {
-			const sellRatio = currencyToChaosPrices.sellPrices[i] / currencyToChaosPrices.buyPrices[i];
-			const buyRatio = chaosToCurrencyPrices.buyPrices[i] / chaosToCurrencyPrices.sellPrices[i];
+		let rowNum = 0;
+		for (rowNum; rowNum < currencyToChaosPrices.sellPrices.length - 1; rowNum++) {
+			const sellRatio = currencyToChaosPrices.sellPrices[rowNum] / currencyToChaosPrices.buyPrices[rowNum];
+			const buyRatio = chaosToCurrencyPrices.buyPrices[rowNum] / chaosToCurrencyPrices.sellPrices[rowNum];
 			const profit = Math.round((buyRatio / sellRatio - 1) * 100);
 
-			if (profit <= 10 /* Min profit */) {
-				const sellMaxDivisible = this.gcd(currencyToChaosPrices.buyPrices[i], currencyToChaosPrices.sellPrices[i]);
-				bestPrice.sell = `${ currencyToChaosPrices.buyPrices[i] }/${ currencyToChaosPrices.sellPrices[i] }`
-				bestPrice.sell += ` (${ currencyToChaosPrices.buyPrices[i] / sellMaxDivisible }/${ currencyToChaosPrices.sellPrices[i] / sellMaxDivisible })`;
+			if (profit <= this.maxprofit) {
+				const sellMaxDivisible = this.gcd(currencyToChaosPrices.buyPrices[rowNum], currencyToChaosPrices.sellPrices[rowNum]);
+				bestPrice.sell = `${ currencyToChaosPrices.buyPrices[rowNum] }/${ currencyToChaosPrices.sellPrices[rowNum] }`
+				bestPrice.sell += ` (${ currencyToChaosPrices.buyPrices[rowNum] / sellMaxDivisible }/${ currencyToChaosPrices.sellPrices[rowNum] / sellMaxDivisible })`;
 
-				const buyMaxDivisible = this.gcd(chaosToCurrencyPrices.buyPrices[i], chaosToCurrencyPrices.sellPrices[i]);
-				bestPrice.buy = `${ chaosToCurrencyPrices.buyPrices[i] }/${ chaosToCurrencyPrices.sellPrices[i] }`;
-				bestPrice.buy += ` (${ chaosToCurrencyPrices.buyPrices[i] / buyMaxDivisible }/${ chaosToCurrencyPrices.sellPrices[i] / buyMaxDivisible })`;
+				const buyMaxDivisible = this.gcd(chaosToCurrencyPrices.buyPrices[rowNum], chaosToCurrencyPrices.sellPrices[rowNum]);
+				bestPrice.buy = `${ chaosToCurrencyPrices.buyPrices[rowNum] }/${ chaosToCurrencyPrices.sellPrices[rowNum] }`;
+				bestPrice.buy += ` (${ chaosToCurrencyPrices.buyPrices[rowNum] / buyMaxDivisible }/${ chaosToCurrencyPrices.sellPrices[rowNum] / buyMaxDivisible })`;
 
 				bestPrice.profit = profit;
 			} else
 				break;
 		}
 
-		let out = `${this.currency} > chaos\n`;
+		let out = `\n${this.currency} > chaos\n`;
 		out += `${ bestPrice.sell }\n`;
 		out += `chaos > ${this.currency}\n`;
 		out += `${ bestPrice.buy }\n`;
-		out += `Profit: ${ bestPrice.profit }%`;
+		if (bestPrice.profit < 1)
+			out += `${ bestPrice.profit === 0 ? 'No' : 'Negative' } profit: ${ bestPrice.profit }%`;
+		else
+			out += `Profit: ${ bestPrice.profit }% (~row ${ this.startrow + rowNum })`;
 		return out;
 	}
 
@@ -175,7 +198,10 @@ class CurrencyPriceFetcher {
 		this.link = link;
 	}
 
-	async go() {
+	async go(
+		startrow,
+		maxrow
+	) {
 
 		let driver = await CurrencyPriceFetcher.createDriver();
 		try {
@@ -187,7 +213,6 @@ class CurrencyPriceFetcher {
 
 			const loadMoreButton = await driver.findElement(By.className('load-more-btn'));
 
-			// await driver.wait(until.elementIsEnabled(loadMoreButton), 2000);
 			await driver.wait(until.elementTextIs(loadMoreButton, 'Load More'), 2000);
 			await loadMoreButton.click();
 			await driver.wait(() => {
@@ -203,12 +228,13 @@ class CurrencyPriceFetcher {
 				sellPrices: [],
 				buyPrices: []
 			};
-			const skipPrices = 8;
-			const maxPrices = 18;
 			let rows = $('.row.exchange');
+			let numRows = maxrow ? startrow + maxrow : rows.length - 1;
+			if (numRows > rows.length - 1)
+				numRows = rows.length - 1;
 			rows = rows.slice(
-				skipPrices,
-				maxPrices ? skipPrices + maxPrices : rows.length - 1
+				startrow,
+				numRows
 			);
 			rows.each((i, elem) => {
 				const row = $(elem);
@@ -221,16 +247,7 @@ class CurrencyPriceFetcher {
 				result.buyPrices.push(+buyPrice.text());
 			});
 
-			// const sumSellPrices = prices.sellPrices.reduce((a, b) => a + b, 0);
-			// const sumBuyPrices = prices.buyPrices.reduce((a, b) => a + b, 0);
-			// const out = [
-			// 	Math.round(sumSellPrices / numPrices),
-			// 	Math.round(sumBuyPrices / numPrices)
-			// ];
-			// const divisible = this.gcd(...out);
-			// return out.map(n => n / divisible);
 			return result;
-
 		} finally {
 			await driver.close();
 		}
@@ -239,7 +256,7 @@ class CurrencyPriceFetcher {
 	static async createDriver() {
 		const chromeOptions = {
 			// w3c: false,
-			binary: '/Applications/Chromium.app/Contents/MacOS/Chromium',
+			// binary: '/Applications/Chromium.app/Contents/MacOS/Chromium',
 			args: [
 				"--disable-extensions",
 				"--window-size=1366,768",
@@ -262,7 +279,29 @@ class CurrencyPriceFetcher {
 }
 
 (async () => {
-	const currencyPricings = new CurrencyPricings(process.argv.slice(2));
+	let { currencies, maxprofit = 10, startrow, maxrow } = yargs(hideBin(process.argv)).argv
+
+	if (!startrow)
+		startrow = 0;
+	else
+		startrow = startrow - 1;
+
+	if (!currencies) {
+		console.error('No currencies defined');
+		return;
+	}
+
+	if (maxrow && (startrow || 0) + maxrow > 40) {
+		console.error('Startrow + maxrow cannot be higher than 40');
+		return;
+	}
+
+	const currencyPricings = new CurrencyPricings(
+		currencies.split(','),
+		maxprofit,
+		startrow,
+		maxrow
+	);
 	const pricings = await currencyPricings.start();
 	console.log(pricings);
 })();
