@@ -19,7 +19,7 @@ Run: `node ./poe-currency-pricings.js ...args`
 - `--maxrow=MAXROW` The maximum number of rows from the startrow we will parse.
 
 #### Example:
-`node ./poe-currency-pricings.js --currencies=chromatic,cartographer,fusing --maxprofit=15 --startrow=10 --maxrow=15`
+`node ./poe-currency-pricings.js --currencies=chromatic,cartographer,fusing --maxprofit=10 --startrow=10 --maxrow=15`
 
 #### Supported currencies:
 - chromatic
