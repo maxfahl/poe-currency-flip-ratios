@@ -4,7 +4,7 @@ A node script for helping with currency flipping. It scrapes the pathofexile tra
 
 #### Prerequisites:
 - Node JS
-- Chrome version 88 (needs to be installed on the computer)
+- Chrome (version 88)
 
 Install: `yarn install / npm install`
 
