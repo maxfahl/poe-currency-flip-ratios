@@ -14,9 +14,9 @@ Run: `node ./poe-currency-pricings.js ...args`
 
 #### Args:
 - `--currencies=LIST_OF_CURRENCIES` A comma separated list of currencies.
-- `--maxprofit=PERCENT` The maximum profit margin. The higher the number, the lower you'll end up in the search results.
+- `--profit=PERCENT` The profit margin we will aim for. The higher the number, the lower you'll end up in the search results.
 - `--startrow=STARTROW` The row we will start looking for prices on.
-- `--maxrow=MAXROW` The maximum number of rows from the startrow we will parse.
+- `--numrows=NUMROWS` The maximum number of rows from the startrow we will parse.
 
 #### Example:
 `node ./poe-currency-pricings.js --currencies=chromatic,cartographer,fusing --maxprofit=10 --startrow=10 --maxrow=15`

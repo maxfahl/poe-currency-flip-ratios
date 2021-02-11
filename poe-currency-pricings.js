@@ -2,12 +2,12 @@
 
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
-const { Capabilities, Builder, By, until } = require('selenium-webdriver');
+const { Builder, By, until } = require('selenium-webdriver');
 const { Options } = require('selenium-webdriver/chrome');
 const cheerio = require('cheerio');
-const chrome = require('selenium-webdriver/chrome');
 const wdLogging = require('selenium-webdriver/lib/logging');
 
+require('selenium-webdriver/chrome');
 require('chromedriver');
 
 // Disable webdriver logging.
@@ -87,19 +87,22 @@ class CurrencyPricings {
 
 	constructor(
 		currencies,
-		maxprofit,
+		profit,
 		startrow,
-		maxrow
+		numrows,
+		debug
 	) {
+		CurrencyPricings.DEBUG = debug;
+
 		currencies.forEach(c => {
 			const priceLinks = CurrencyPricings.CURRENCIES[c];
 			if (priceLinks) {
 				this.runners.push(
 					new CurrencyPricingRunner(
 						c,
-						maxprofit,
+						profit,
 						startrow,
-						maxrow,
+						numrows,
 						CurrencyPricings.CURRENCIES[c]
 					)
 				)
@@ -145,15 +148,15 @@ class CurrencyPricingRunner {
 
 	constructor(
 		currency,
-		maxprofit,
+		profit,
 		startrow,
-		maxrow,
+		numrows,
 		links
 	) {
 		this.currency = currency;
-		this.maxprofit = maxprofit || 10;
+		this.profit = profit || 10;
 		this.startrow = startrow || 0;
-		this.maxrow = maxrow;
+		this.numrows = numrows;
 		this.links = links;
 	}
 
@@ -167,8 +170,8 @@ class CurrencyPricingRunner {
 		try {
 			console.log(`Fetching ratios for ${ this.currency }...`);
 			prices = await Promise.all([
-				fetchers[0].go(this.startrow, this.maxrow),
-				fetchers[1].go(this.startrow, this.maxrow),
+				fetchers[0].go(this.startrow, this.numrows),
+				fetchers[1].go(this.startrow, this.numrows),
 			]);
 		} catch(err) {
 			let driver = await CurrencyPriceFetcher.createDriver();
@@ -187,7 +190,7 @@ class CurrencyPricingRunner {
 		let rowNum = 0;
 		for (rowNum; rowNum < currencyToChaosPrices.sellPrices.length - 1; rowNum++) {
 			const info = this.getPriceInfo(currencyToChaosPrices, chaosToCurrencyPrices, rowNum);
-			if (info.profit <= this.maxprofit)
+			if (info.profit <= this.profit)
 				priceInfo = info;
 			else
 				break;
@@ -208,7 +211,7 @@ class CurrencyPricingRunner {
 		else
 			out += `Profit: ${ priceInfo.profit }% (~row ${ this.startrow + rowNum + 1 })`;
 		if (noProfitBelow)
-			out += `\n(Could not find row pairs matching a maxprofit of ${ this.maxprofit }%)`;
+			out += `\n(Could not find row pairs matching a maxprofit of ${ this.profit }%)`;
 
 		return out;
 	}
@@ -249,34 +252,38 @@ class CurrencyPricingRunner {
 
 class CurrencyPriceFetcher {
 
+	driver;
+
 	constructor(link) {
 		this.link = link;
 	}
 
 	async go(
 		startrow,
-		maxrow
+		numrows
 	) {
-
-		let driver = await CurrencyPriceFetcher.createDriver();
+		this.driver = await CurrencyPriceFetcher.createDriver();
 		try {
-			await driver.get(`https://www.pathofexile.com/trade/exchange/Ritual/${this.link}`);
+			await this.driver.get(`https://www.pathofexile.com/trade/exchange/Ritual/${this.link}`);
+			await this.driver.wait(until.elementLocated(By.className('row exchange')), 6000);
+			const rowsToLoad = Math.max(startrow + numrows, 20);
+			const pagesToLoad = Math.floor((rowsToLoad - 20) / 20);
+			const exchangeEls = await this.driver.findElements(By.className('row exchange'));
+			let lastNumRows = exchangeEls.length;
+			try {
+				for (let i = 0; i < pagesToLoad; i++) {
+					const numRows = await this.loadMore(lastNumRows);
+					if (lastNumRows !== numRows) {
+						lastNumRows = numRows;
+					} else {
+						break;
+					}
+				}
+			} catch (err) {
+				// Just continue
+			}
 
-			await driver.wait(until.elementLocated(By.className('row exchange')), 6000);
-			let exchangeEls = await driver.findElements(By.className('row exchange'));
-			const firstExchangeElsCount = exchangeEls.length;
-
-			const loadMoreButton = await driver.findElement(By.className('load-more-btn'));
-
-			await driver.wait(until.elementTextIs(loadMoreButton, 'Load More'), 2000);
-			await loadMoreButton.click();
-			await driver.wait(() => {
-				return driver.findElements(By.className('row exchange')).then((elements) => {
-					return elements.length !== firstExchangeElsCount;
-				});
-			}, 6000);
-
-			const pageSource = await driver.getPageSource();
+			const pageSource = await this.driver.getPageSource();
 			const $ = cheerio.load(pageSource);
 
 			const result = {
@@ -284,12 +291,12 @@ class CurrencyPriceFetcher {
 				buyPrices: []
 			};
 			let rows = $('.row.exchange');
-			let numRows = maxrow ? startrow + maxrow : rows.length - 1;
-			if (numRows > rows.length - 1)
-				numRows = rows.length - 1;
+			numrows = numrows ? startrow + numrows : rows.length - 1;
+			if (numrows > rows.length - 1)
+				numrows = rows.length - 1;
 			rows = rows.slice(
 				startrow,
-				numRows
+				numrows
 			);
 			rows.each((i, elem) => {
 				const row = $(elem);
@@ -304,14 +311,29 @@ class CurrencyPriceFetcher {
 
 			return result;
 		} finally {
-			await driver.close();
+			await this.driver.close();
 		}
+	}
+
+	async loadMore(lastNumRows) {
+		const loadMoreButton = await this.driver.findElement(By.className('load-more-btn'));
+		await this.driver.wait(until.elementTextIs(loadMoreButton, 'Load More'), 2000);
+		await loadMoreButton.click();
+		await this.driver.wait(() => {
+			return this.driver.findElements(By.className('row exchange')).then((elements) => {
+				return elements.length !== lastNumRows;
+			});
+		}, 6000);
+
+		const currentNuRows = await this.driver.findElements(By.className('row exchange'))
+		return currentNuRows.length;
 	}
 
 	static async createDriver() {
 		let options = new Options();
-		options.headless();
-		options.excludeSwitches('enable-logging')
+		if (!CurrencyPricings.DEBUG)
+			options.headless();
+		options.excludeSwitches('enable-logging');
 
 		return new Builder()
 			.forBrowser('chrome')
@@ -321,7 +343,7 @@ class CurrencyPriceFetcher {
 }
 
 (async () => {
-	let { currencies, maxprofit = 10, startrow, maxrow } = yargs(hideBin(process.argv)).argv
+	let { currencies, maxprofit: profit = 10, startrow, numrows, debug } = yargs(hideBin(process.argv)).argv
 
 	if (!startrow)
 		startrow = 0;
@@ -333,16 +355,17 @@ class CurrencyPriceFetcher {
 		return;
 	}
 
-	if (maxrow && (startrow || 0) + maxrow > 40) {
-		console.error('Startrow + maxrow cannot be higher than 40');
-		return;
-	}
+	// if (numrows && (startrow || 0) + numrows > 40) {
+	// 	console.error('Startrow + maxrow cannot be higher than 40');
+	// 	return;
+	// }
 
 	const currencyPricings = new CurrencyPricings(
 		currencies.split(','),
-		maxprofit,
+		profit,
 		startrow,
-		maxrow
+		numrows,
+		!!debug
 	);
 	const pricings = await currencyPricings.start();
 	console.log(pricings);
