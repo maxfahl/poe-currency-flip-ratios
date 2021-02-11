@@ -8,6 +8,8 @@ const cheerio = require('cheerio');
 const wdLogging = require('selenium-webdriver/lib/logging');
 const fs = require('fs');
 
+const currencyLinks = require('./currency-links.json');
+
 require('selenium-webdriver/chrome');
 require('chromedriver');
 
@@ -18,85 +20,6 @@ for (const logType in wdLogging.Type) {
 }
 
 class CurrencyPricings {
-	static CURRENCIES = {
-		"alchemy": [
-			"yYYOiR", // Alchemy < Chaos
-			"rPe7CQ" // Chaos < Alchemy
-		],
-		"alteration": [
-			"Ny7gfR",
-			"AjnbtX"
-		],
-		"annulment": [
-			"vZa2zkXCE",
-			"rGw3nDRcQ"
-		],
-		"augmentation": [
-			"5M2osa",
-			"dZk3cJ"
-		],
-		"blessed": [
-			"Q2Q7Cw",
-			"5n8nta"
-		],
-		"cartographer": [
-			"zbVRF4",
-			"4my8I9"
-		],
-		"chance": [
-			"X3JBsP",
-			"0YR8Ig"
-		],
-		"chromatic": [
-			"OgMEkltE",
-			"BgM9OWS8"
-		],
-		"divine": [
-			"9z28fK",
-			"NpeJc0"
-		],
-		"exalted": [
-			"Nn8Vt0",
-			"12R5ck"
-		],
-		"fusing": [
-			"AjoXSX",
-			"AoJrFl"
-		],
-		"gemcutter": [
-			"ADa4f5",
-			"18jvcV"
-		],
-		"glassblower": [
-			"dkpQGqqcJ",
-			"LBbWavXtn"
-		],
-		"jeweller": [
-			"2n56EO0ck",
-			"akeX753he"
-		],
-		"regal": [
-			"EBBVC5",
-			"YpagsY"
-		],
-		"regret": [
-			"zbJai4",
-			"9z6ztK"
-		],
-		"scour": [
-			"rbdMHQ",
-			"EBEzt5"
-		],
-		"transmutation": [
-			"9dXOPnKuK",
-			"B36Z5RKi8"
-		],
-		"vaal": [
-			"18GVuV",
-			"EB9LC5"
-		]
-	};
-
 	currencies;
 	profit;
 	startrow;
@@ -135,7 +58,7 @@ class CurrencyPricings {
 		}
 
 		this.currencies.forEach(c => {
-			const priceLinks = CurrencyPricings.CURRENCIES[c];
+			const priceLinks = currencyLinks[c];
 			if (priceLinks) {
 				this.runners.push(
 					new CurrencyPricingRunner(
@@ -144,7 +67,7 @@ class CurrencyPricings {
 						this.startrow,
 						this.numrows,
 						this.priceCache[c],
-						CurrencyPricings.CURRENCIES[c]
+						currencyLinks[c]
 					)
 				)
 			} else
