@@ -22,20 +22,26 @@ Run: `node ./poe-currency-pricings.js ...args`
 `node ./poe-currency-pricings.js --currencies=chromatic,cartographer,fusing --maxprofit=10 --startrow=10 --maxrow=15`
 
 #### Supported currencies:
-- chromatic
-- cartographer
-- fusing
-- chance
+
 - alchemy
-- gemcutter
-- regret
-- vaal
 - alteration
+- annulment
+- augmentation
 - blessed
-- regal
-- glassblower
+- cartographer
+- chance
+- chromatic
 - divine
 - exalted
+- fusing
+- gemcutter
+- glassblower
+- jeweller
+- regal
+- regret
+- scour
+- transmutation
+- vaal
 
 Other currencies can be added at the top of the script, the first string is the trade link suffix for the currency you want to sell, the other is for when you want to buy that same currency for chaos.
 

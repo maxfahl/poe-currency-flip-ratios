@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 const yargs = require('yargs/yargs')
-const { hideBin } = require('yargs/helpers')
-const { Builder, By, until } = require('selenium-webdriver');
-const { Options } = require('selenium-webdriver/chrome');
+const {hideBin} = require('yargs/helpers')
+const {Builder, By, until} = require('selenium-webdriver');
+const {Options} = require('selenium-webdriver/chrome');
 const cheerio = require('cheerio');
 const wdLogging = require('selenium-webdriver/lib/logging');
 const fs = require('fs');
@@ -14,70 +14,86 @@ require('chromedriver');
 // Disable webdriver logging.
 const loggingPrefs = new wdLogging.Preferences();
 for (const logType in wdLogging.Type) {
-    loggingPrefs.setLevel(logType, wdLogging.Level.OFF);
+	loggingPrefs.setLevel(logType, wdLogging.Level.OFF);
 }
 
 class CurrencyPricings {
 	static CURRENCIES = {
-		chromatic: [
-			'OgMEkltE', // Chromatic < Chaos
-			'BgM9OWS8' // Chaos < Chromatic
+		"alchemy": [
+			"yYYOiR", // Alchemy < Chaos
+			"rPe7CQ" // Chaos < Alchemy
 		],
-		cartographer: [
-			'zbVRF4',
-			'4my8I9'
+		"alteration": [
+			"Ny7gfR",
+			"AjnbtX"
 		],
-		fusing: [
-			'AjoXSX',
-			'AoJrFl'
+		"annulment": [
+			"vZa2zkXCE",
+			"rGw3nDRcQ"
 		],
-		chance: [
-			'X3JBsP',
-			'0YR8Ig'
+		"augmentation": [
+			"5M2osa",
+			"dZk3cJ"
 		],
-		alchemy: [
-			'yYYOiR',
-			'rPe7CQ'
+		"blessed": [
+			"Q2Q7Cw",
+			"5n8nta"
 		],
-		gemcutter: [
-			'ADa4f5',
-			'18jvcV'
+		"cartographer": [
+			"zbVRF4",
+			"4my8I9"
 		],
-		regret: [
-			'zbJai4',
-			'9z6ztK'
+		"chance": [
+			"X3JBsP",
+			"0YR8Ig"
 		],
-		vaal: [
-			'18GVuV',
-			'EB9LC5'
+		"chromatic": [
+			"OgMEkltE",
+			"BgM9OWS8"
 		],
-		scour: [
-			'rbdMHQ',
-			'EBEzt5'
+		"divine": [
+			"9z28fK",
+			"NpeJc0"
 		],
-		alteration: [
-			'Ny7gfR',
-			'AjnbtX'
+		"exalted": [
+			"Nn8Vt0",
+			"12R5ck"
 		],
-		blessed: [
-			'Q2Q7Cw',
-			'5n8nta'
+		"fusing": [
+			"AjoXSX",
+			"AoJrFl"
 		],
-		regal: [
-			'EBBVC5',
-			'YpagsY'
+		"gemcutter": [
+			"ADa4f5",
+			"18jvcV"
 		],
-		glassblower: [
-			'dkpQGqqcJ',
-			'LBbWavXtn'
+		"glassblower": [
+			"dkpQGqqcJ",
+			"LBbWavXtn"
 		],
-		divine: [
-			'9z28fK',
-			'NpeJc0'
+		"jeweller": [
+			"2n56EO0ck",
+			"akeX753he"
 		],
-		exalted: [
-			'Nn8Vt0',
-			'12R5ck'
+		"regal": [
+			"EBBVC5",
+			"YpagsY"
+		],
+		"regret": [
+			"zbJai4",
+			"9z6ztK"
+		],
+		"scour": [
+			"rbdMHQ",
+			"EBEzt5"
+		],
+		"transmutation": [
+			"9dXOPnKuK",
+			"B36Z5RKi8"
+		],
+		"vaal": [
+			"18GVuV",
+			"EB9LC5"
 		]
 	};
 
@@ -132,7 +148,7 @@ class CurrencyPricings {
 					)
 				)
 			} else
-				console.error(`Currency "${ c }" is not supported, skipping.`);
+				console.error(`Currency "${c}" is not supported, skipping.`);
 		});
 
 		return await this.priceNext();
@@ -145,9 +161,9 @@ class CurrencyPricings {
 			try {
 				result = await currentRunner.go();
 				this.retryCount = 0;
-			} catch(err) {
+			} catch (err) {
 				this.retryCount++;
-				console.log(`Rate limit exceeded, trying again in 60 seconds (${ this.retryCount }).`);
+				console.log(`Rate limit exceeded, trying again in 60 seconds (${this.retryCount}).`);
 				return new Promise(resolve => {
 					setTimeout(
 						() => resolve(this.priceNext()),
@@ -242,15 +258,15 @@ class CurrencyPricingRunner {
 		}
 
 		let info = `\n${this.currency} > chaos\n`;
-		info += `${ priceInfo.sell }\n`;
+		info += `${priceInfo.sell}\n`;
 		info += `chaos > ${this.currency}\n`;
-		info += `${ priceInfo.buy }\n`;
+		info += `${priceInfo.buy}\n`;
 		if (priceInfo.profit < 1)
-			info += `${ priceInfo.profit === 0 ? 'No' : 'Negative' } profit: ${ priceInfo.profit }%`;
+			info += `${priceInfo.profit === 0 ? 'No' : 'Negative'} profit: ${priceInfo.profit}%`;
 		else
-			info += `Profit: ${ priceInfo.profit }% (~row ${ this.startrow + rowNum + 1 })`;
+			info += `Profit: ${priceInfo.profit}% (~row ${this.startrow + rowNum + 1})`;
 		if (noProfitBelow)
-			info += `\n(Could not find row pairs matching a maxprofit of ${ this.profit }%)`;
+			info += `\n(Could not find row pairs matching a maxprofit of ${this.profit}%)`;
 
 		return {
 			info,
@@ -274,12 +290,12 @@ class CurrencyPricingRunner {
 		};
 
 		const sellMaxDivisible = this.gcd(currencyToChaos.buyPrices[row], currencyToChaos.sellPrices[row]);
-		info.sell = `${ currencyToChaos.buyPrices[row] }/${ currencyToChaos.sellPrices[row] }`
-		info.sell += ` (${ currencyToChaos.buyPrices[row] / sellMaxDivisible }/${ currencyToChaos.sellPrices[row] / sellMaxDivisible })`;
+		info.sell = `${currencyToChaos.buyPrices[row]}/${currencyToChaos.sellPrices[row]}`
+		info.sell += ` (${currencyToChaos.buyPrices[row] / sellMaxDivisible}/${currencyToChaos.sellPrices[row] / sellMaxDivisible})`;
 
 		const buyMaxDivisible = this.gcd(chaosToCurrency.buyPrices[row], chaosToCurrency.sellPrices[row]);
-		info.buy = `${ chaosToCurrency.buyPrices[row] }/${ chaosToCurrency.sellPrices[row] }`;
-		info.buy += ` (${ chaosToCurrency.buyPrices[row] / buyMaxDivisible }/${ chaosToCurrency.sellPrices[row] / buyMaxDivisible })`;
+		info.buy = `${chaosToCurrency.buyPrices[row]}/${chaosToCurrency.sellPrices[row]}`;
+		info.buy += ` (${chaosToCurrency.buyPrices[row] / buyMaxDivisible}/${chaosToCurrency.sellPrices[row] / buyMaxDivisible})`;
 
 		return info;
 	}
@@ -378,7 +394,7 @@ class CurrencyPriceFetcher {
 }
 
 (async () => {
-	let { currencies, profit = 10, startrow = 0, numrows = 40, debug, offline } = yargs(hideBin(process.argv)).argv
+	let {currencies, profit = 10, startrow = 0, numrows = 40, debug, offline} = yargs(hideBin(process.argv)).argv
 
 	if (!startrow)
 		startrow = 0;
