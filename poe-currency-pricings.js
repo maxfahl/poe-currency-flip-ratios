@@ -329,11 +329,6 @@ class CurrencyPriceFetcher {
 		return;
 	}
 
-	// if (numrows && (startrow || 0) + numrows > 40) {
-	// 	console.error('Startrow + maxrow cannot be higher than 40');
-	// 	return;
-	// }
-
 	const currencyPricings = new CurrencyPricings(
 		currencies.split(','),
 		profit,
