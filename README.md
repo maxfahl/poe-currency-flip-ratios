@@ -19,7 +19,7 @@ Run: `node ./poe-currency-pricings.js ...args`
 - `--debug` Don't run Chrome in headless mode.
 
 #### Example:
-`node ./poe-currency-pricings.js --currencies=chromatic,cartographer,fusing --maxprofit=10 --startrow=10 --maxrow=15`
+`node ./poe-currency-pricings.js --currencies=chromatic,cartographer,fusing --profit=10 --startrow=10 --numrows=15`
 
 #### Supported currencies:
 
