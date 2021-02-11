@@ -1,6 +1,6 @@
 # poe-currency-pricings
 
-A very simple node script for helping with currency flipping. It scrapes the pathofexile trade site for currency sell/buy ratios. It has been tested on Mac OS Big Sur as well as Windows 10.
+A node script for helping with currency flipping. It scrapes the pathofexile trade site for currency sell/buy ratios. It has been tested on Mac OS Big Sur as well as Windows 10.
 
 #### Prerequisites:
 - Node JS
