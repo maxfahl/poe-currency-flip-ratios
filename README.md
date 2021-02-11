@@ -12,7 +12,7 @@ Run: `node ./poe-currency-pricings.js ...args`
 
 #### Args:
 - `--currencies=LIST_OF_CURRENCIES` A comma separated list of currencies.
-- `--profit=PERCENT` Desired profit margin, defaults to 10.
+- `--profit=PERCENT` Desired profit margin, defaults to 10%.
 - `--startrow=STARTROW` The row we will start looking for prices on, defaults to 0,
 - `--numrows=NUMROWS` The maximum number of rows from the startrow we will parse, defaults to 40.
 - `--offline` Will not get prices from site, instead uses a local cache.
