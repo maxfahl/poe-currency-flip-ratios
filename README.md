@@ -1,8 +1,6 @@
 # poe-currency-pricings
 
-A very simple node script for helping with currency flipping. It scrapes the poe trade site for sell/buy ratios of a certain currency. It has been tested on Mac OS Big Sur as well as Windows 10.
-
-It currently gets prices for rows 16 to 24, returning the mean value for those buy/sell values.
+A very simple node script for helping with currency flipping. It scrapes the pathofexile trade site for currency sell/buy ratios. It has been tested on Mac OS Big Sur as well as Windows 10.
 
 #### Prerequisites:
 - Node JS
@@ -14,9 +12,11 @@ Run: `node ./poe-currency-pricings.js ...args`
 
 #### Args:
 - `--currencies=LIST_OF_CURRENCIES` A comma separated list of currencies.
-- `--profit=PERCENT` The profit margin we will aim for. The higher the number, the lower you'll end up in the search results.
+- `--profit=PERCENT` The profit margin we will aim for, defaults to 10.
 - `--startrow=STARTROW` The row we will start looking for prices on.
 - `--numrows=NUMROWS` The maximum number of rows from the startrow we will parse.
+- `--offline` Will not get prices from 
+- `--debug` Don't run Chrome in headless mode.
 
 #### Example:
 `node ./poe-currency-pricings.js --currencies=chromatic,cartographer,fusing --maxprofit=10 --startrow=10 --maxrow=15`
