@@ -180,8 +180,8 @@ class CurrencyPricingRunner {
 		links
 	) {
 		this.currency = currency;
-		this.profit = profit || 10;
-		this.startrow = startrow || 0;
+		this.profit = profit;
+		this.startrow = startrow;
 		this.numrows = numrows;
 		this.priceCache = priceCache;
 		this.links = links;
@@ -378,7 +378,7 @@ class CurrencyPriceFetcher {
 }
 
 (async () => {
-	let { currencies, profit = 10, startrow, numrows, debug, offline } = yargs(hideBin(process.argv)).argv
+	let { currencies, profit = 10, startrow = 0, numrows = 40, debug, offline } = yargs(hideBin(process.argv)).argv
 
 	if (!startrow)
 		startrow = 0;
