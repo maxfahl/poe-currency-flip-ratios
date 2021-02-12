@@ -201,14 +201,6 @@ class CurrencyPricingRunner {
 		const buyRatio = chaosToCurrency.buyPrices[row] / chaosToCurrency.sellPrices[row];
 		const profit = Math.round((sellRatio / buyRatio - 1) * 100);
 
-		// if (row === 0 && CurrencyPricings.DEBUG) {
-		// 	console.log('getPriceInfo');
-		// 	console.log(currencyToChaos.sellPrices[row], currencyToChaos.buyPrices[row]);
-		// 	console.log(chaosToCurrency.buyPrices[row], chaosToCurrency.sellPrices[row]);
-		// 	console.log(profit);
-		// 	console.log('\n');
-		// }
-
 		const info = {
 			sell: '',
 			buy: '',
@@ -311,12 +303,23 @@ class CurrencyPriceFetcher {
 			buyPrices: [],
 			limit: this.parseRateLimit(lastPriceResult)
 		};
-		const matchReg = /([0-9]+)\/([0-9]+)/;
+		const matchReg = /([0-9]+)\/([0-9]+)?/;
 		notes.forEach(n => {
 			const matches = n.match(matchReg);
 			if (n.indexOf('b/o') === -1 && matches) {
-				result.sellPrices.push(+matches[1]);
-				result.buyPrices.push(+matches[2]);
+				if (matches[1] && matches[2]) {
+					result.sellPrices.push(+matches[1]);
+					result.buyPrices.push(+matches[2]);
+				} else {
+					const wantIsChaos = this.want === 'chaos';
+					if (wantIsChaos) {
+						result.sellPrices.push(1);
+						result.buyPrices.push(+matches[1]);
+					} else {
+						result.sellPrices.push(+matches[1]);
+						result.buyPrices.push(1);
+					}
+				}
 			}
 		});
 
@@ -348,7 +351,7 @@ class CurrencyPriceFetcher {
 
 	async sleep(ms) {
 		if (ms > 10000 || CurrencyPricings.DEBUG)
-			console.log('Rate limited, waiting ' + (ms/1000) + ' seconds.');
+			console.log('Rate limited, waiting ' + Math.round(ms/1000) + ' seconds.');
 		await new Promise(resolve => setTimeout(resolve, ms));
 	}
 }
