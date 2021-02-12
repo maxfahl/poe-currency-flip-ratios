@@ -5,7 +5,7 @@
 #### Prerequisites
 - Node JS
 
-Install: `yarn install / npm install`  
+Install: `yarn install` or `npm install`  
 Run: `node ./poe-currency-pricings.js ...args`
 
 #### Arguments
