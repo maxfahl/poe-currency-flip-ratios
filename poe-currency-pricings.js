@@ -72,24 +72,26 @@ class CurrencyPricings {
 				if (err.message === 'request error') {
 					this.retryCount++;
 					if (this.retryCount < 6) {
-						console.error(`Something went wrong, trying again in 60 seconds (${this.retryCount}).`);
+						console.error(`Something went wrong, trying again in 20 seconds (${this.retryCount}).`);
 						return new Promise(resolve => {
 							setTimeout(
 								() => resolve(this.priceNext()),
-								60000
+								20000
 							); // Try again in a minute
 						});
 					} else {
 						console.error(`Failed 5 times in a row, aborting.`);
 						return '';
 					}
-				} else {
+				} else if (err.message !== 'no-listings') {
 					console.error('An unknown error has occurred', err);
 					return '';
 				}
 			}
-			this.priceCache[currentRunner.currency] = result.prices;
-			this.resultInfo += `${result.info}\n`;
+			if (result) {
+				this.priceCache[currentRunner.currency] = result.prices;
+				this.resultInfo += `${result.info}\n`;
+			}
 		} else {
 			await fs.writeFileSync('price-cache.json', JSON.stringify(this.priceCache));
 			return this.resultInfo;
@@ -238,7 +240,7 @@ class CurrencyPriceFetcher {
 	}
 
 	async go() {
-		console.log(`Fetching ratios for ${ this.want } > ${ this.have }`);
+		console.log(`Fetching ratios for ${ this.want } > ${ this.have }.`);
 
 		const search = {
 			exchange: {
@@ -266,6 +268,10 @@ class CurrencyPriceFetcher {
 				}
 			);
 			let {data: {id, result: rows}} = listingsResult;
+			if (!rows.length) {
+				console.error(`No listings found for ${this.want} > ${this.have}, skipping.`);
+				throw new Error('no-listings');
+			}
 
 			const limit = this.parseRateLimit(listingsResult)
 			listingsRateLimitEnd = performance.now() + (limit.num === 1 ? (limit.per * 1000) : 0);
@@ -279,7 +285,7 @@ class CurrencyPriceFetcher {
 
 			const rowResults = [];
 			for (let i = 0; i < rowRequests.length; i++) {
-				console.log(`Fetching page ${i + 1} of ${rowRequests.length}`);
+				console.log(`Fetching page ${i + 1} of ${rowRequests.length}.`);
 				let rowResult = await axios.get(rowRequests[i]);
 				rowResults.push(rowResult);
 
@@ -294,8 +300,9 @@ class CurrencyPriceFetcher {
 		} catch (err) {
 			if (err.response && (err.response.status === 429 || err.response.status === 404)) {
 				throw new Error('request error');
-			} else
+			} else {
 				throw err;
+			}
 		}
 
 		const result = {
@@ -333,16 +340,6 @@ class CurrencyPriceFetcher {
 		return result;
 	}
 
-	parseRateLimit(result) {
-		const limits = result.headers['x-rate-limit-ip-state'].split(',');
-		const baseLimit = limits[0].split(':');
-		return {
-			num: +baseLimit[0],
-			per: +baseLimit[1],
-			throttle: +baseLimit[2]
-		}
-	}
-
 	async waitIfRateLimited(result) {
 		const limit = this.parseRateLimit(result)
 		if (limit.num === 1)
@@ -351,8 +348,18 @@ class CurrencyPriceFetcher {
 
 	async sleep(ms) {
 		if (ms > 10000 || CurrencyPricings.DEBUG)
-			console.log('Rate limited, waiting ' + Math.round(ms/1000) + ' seconds.');
+			console.log('Rate limited longer than usual, waiting ' + Math.round(ms/1000) + ' seconds.');
 		await new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	parseRateLimit(result) {
+		const limits = result.headers['x-rate-limit-ip-state'].split(',');
+		const baseLimit = limits[0].split(':');
+		return {
+			num: +baseLimit[0],
+			per: +baseLimit[1],
+			throttle: +baseLimit[2]
+		}
 	}
 }
 
