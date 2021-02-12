@@ -19,15 +19,17 @@ Run: `node ./poe-currency-pricings.js ...args`
 | `debug` | boolean | Verbose logging (optional) |
 
 #### Example
-`node ./poe-currency-pricings.js --currencies=vaal,chrome,fusing,chisel --profit=10 --startrow=10 --numrows=15`
+```bash
+node ./poe-currency-pricings.js --currencies=vaal,chrome,fusing,chisel --profit=10 --startrow=10 --numrows=15
+```
 
 #### Supported currencies
 
-Every currency listed [here](https://www.pathofexile.com/trade/about) is supported. Use tho short variation of the currency name with the script, for example, use "chrome", not "Chromatic Orb".
+Every currency listed [here](https://www.pathofexile.com/trade/about) is supported. Use the short variation of the currency name (chrome, gcp etc.).
 
 #### Result example
 
-```
+```text
 vaal > chaos
 60/100 (3/5)
 chaos > vaal
