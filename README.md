@@ -11,12 +11,12 @@ Run: `node ./poe-currency-pricings.js ...args`
 #### Arguments
 | Argument | Value | Explanation | Default
 --- | --- | --- | ---
-| `--currencies` | comma separated list | A comma separated list of currencies. |
-| `--profit` | number | Desired profit margin (optional) | 10
-| `--startrow` | number | The row we will start looking for prices on (optional) | 0
-| `--numrows` | number | Number of rows from the startrow we will examine (optional) | 40
-| `--offline` | boolean | Use local cache instead of live results (optional) |
-| `--debug` | boolean | Verbose logging (optional) |
+| `currencies` | comma separated list | A comma separated list of currencies. |
+| `profit` | number | Desired profit margin (optional) | 10
+| `startrow` | number | The row we will start looking for prices on (optional) | 0
+| `numrows` | number | Number of rows from the startrow we will examine (optional) | 40
+| `offline` | boolean | Use local cache instead of live results (optional) |
+| `debug` | boolean | Verbose logging (optional) |
 
 #### Example
 `node ./poe-currency-pricings.js --currencies=vaal,chrome,fusing,chisel --profit=10 --startrow=10 --numrows=15`
