@@ -310,7 +310,7 @@ class CurrencyPriceFetcher {
 			buyPrices: [],
 			limit: this.parseRateLimit(lastPriceResult)
 		};
-		const matchReg = /([0-9]+)\/([0-9]+)?/;
+		const matchReg = /([0-9]+)\/?([0-9]+)?/;
 		notes.forEach(n => {
 			const matches = n.match(matchReg);
 			if (n.indexOf('b/o') === -1 && matches) {
