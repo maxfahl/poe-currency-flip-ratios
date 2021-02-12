@@ -80,7 +80,7 @@ class CurrencyPricings {
 							); // Try again in a minute
 						});
 					} else {
-						console.error(`Failed 5 times in a row, aborting.`);
+						console.error(`Failed 5 times in a row, aborting.`, err);
 						return '';
 					}
 				} else if (err.message !== 'no-listings') {
