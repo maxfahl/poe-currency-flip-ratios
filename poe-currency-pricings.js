@@ -246,7 +246,7 @@ class CurrencyPriceFetcher {
 	}
 
 	async go() {
-		console.log(`Fetching ratios for ${ this.want } < ${ this.have }...`);
+		console.log(`Fetching ratios for ${ this.want } > ${ this.have }`);
 
 		const search = {
 			exchange: {
