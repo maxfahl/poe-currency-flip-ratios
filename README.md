@@ -1,6 +1,6 @@
 # PoE Currency Flip Ratios
 
-A node script for helping with currency flipping. It scrapes the pathofexile trade site for currency sell/buy ratios. It has been tested on Mac OS Big Sur as well as Windows 10.
+##### A node script for helping with currency flipping that loads listings from the PoE JSON REST API and finds good sell/buy ratios.
 
 #### Prerequisites
 - Node JS
@@ -8,13 +8,15 @@ A node script for helping with currency flipping. It scrapes the pathofexile tra
 Install: `yarn install / npm install`  
 Run: `node ./poe-currency-pricings.js ...args`
 
-#### Args
-- `--currencies=LIST_OF_CURRENCIES` A comma separated list of currencies.
-- `--profit=PERCENT` Desired profit margin, defaults to 10.
-- `--startrow=STARTROW` The row we will start looking for prices on, defaults to 0,
-- `--numrows=NUMROWS` The maximum number of rows from the startrow we will parse, defaults to 40.
-- `--offline` Will not get prices from site, instead uses a local cache.
-- `--debug` More verbose logging.
+#### Arguments
+| Argument | Value | Explanation | Default
+--- | --- | --- | ---
+| `--currencies` | comma separated list | A comma separated list of currencies. |
+| `--profit` | number | Desired profit margin (optional) | 10
+| `--startrow` | number | The row we will start looking for prices on (optional) | 0
+| `--numrows` | number | Number of rows from the startrow we will examine (optional) | 40
+| `--offline` | boolean | Use local cache instead of live results (optional) |
+| `--debug` | boolean | Verbose logging (optional) |
 
 #### Example
 `node ./poe-currency-pricings.js --currencies=vaal,chrome,fusing,chisel --profit=10 --startrow=10 --numrows=15`
