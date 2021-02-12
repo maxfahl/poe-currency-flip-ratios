@@ -1,14 +1,14 @@
-# poe-currency-pricings
+# PoE Currency Flip Ratios
 
 A node script for helping with currency flipping. It scrapes the pathofexile trade site for currency sell/buy ratios. It has been tested on Mac OS Big Sur as well as Windows 10.
 
-#### Prerequisites:
+#### Prerequisites
 - Node JS
 
 Install: `yarn install / npm install`  
 Run: `node ./poe-currency-pricings.js ...args`
 
-#### Args:
+#### Args
 - `--currencies=LIST_OF_CURRENCIES` A comma separated list of currencies.
 - `--profit=PERCENT` Desired profit margin, defaults to 10.
 - `--startrow=STARTROW` The row we will start looking for prices on, defaults to 0,
@@ -16,14 +16,14 @@ Run: `node ./poe-currency-pricings.js ...args`
 - `--offline` Will not get prices from site, instead uses a local cache.
 - `--debug` More verbose logging.
 
-#### Example:
+#### Example
 `node ./poe-currency-pricings.js --currencies=vaal,chrome,fusing,chisel --profit=10 --startrow=10 --numrows=15`
 
-#### Supported currencies:
+#### Supported currencies
 
 Every currency listed [here](https://www.pathofexile.com/trade/about) is supported. Use tho short variation of the currency name with the script, for example, use "chrome", not "Chromatic Orb".
 
-#### Result example:
+#### Result example
 
 ```
 vaal > chaos
@@ -40,6 +40,8 @@ Profit: 13% (~row 24)
 ```
 
 "vaal > chaos 60/100" means that you should price a vaal in your premium stash tab "60/100" of a chaos. "chaos > vaal 38/20" mean you should price a chaos for "38/20" of a vaal. All trades will give a profit margin for that trade, as well as an expected position in the listings. The numbers in parentheses is the maximum common divisible for that ratio, 3/5 is the same ratio as 60/100, but you will sell 5 vaal for 3 chaos, instead of 100 vaal for 60 chaos, which can result in more trade requests, but make less money per trade.
+
+The result is also saved to a textfile named result.txt, where the text can be more easily copied from.
 
 #### Caveats
 

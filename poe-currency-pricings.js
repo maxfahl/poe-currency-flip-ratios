@@ -376,5 +376,6 @@ class CurrencyPriceFetcher {
 		!!offline
 	);
 	const pricings = await currencyPricings.start();
+	await fs.writeFileSync('result.txt', pricings);
 	console.log(pricings);
 })();
