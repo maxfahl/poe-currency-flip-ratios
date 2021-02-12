@@ -4,6 +4,7 @@ const yargs = require('yargs/yargs')
 const {hideBin} = require('yargs/helpers')
 const fs = require('fs');
 const axios = require('axios');
+const { performance } = require('perf_hooks');
 
 class CurrencyPricings {
 	currencies;
@@ -68,15 +69,20 @@ class CurrencyPricings {
 				result = await currentRunner.go(this.currentRunner === this.runners.length - 1);
 				this.retryCount = 0;
 			} catch (err) {
-				if (err.message === 'rate limit') {
+				if (err.message === 'request error') {
 					this.retryCount++;
-					console.log(`Rate limit exceeded, trying again in 60 seconds (${this.retryCount}).`);
-					return new Promise(resolve => {
-						setTimeout(
-							() => resolve(this.priceNext()),
-							60000
-						); // Try again in a minute
-					});
+					if (this.retryCount < 6) {
+						console.error(`Something went wrong, trying again in 60 seconds (${this.retryCount}).`);
+						return new Promise(resolve => {
+							setTimeout(
+								() => resolve(this.priceNext()),
+								60000
+							); // Try again in a minute
+						});
+					} else {
+						console.error(`Failed 5 times in a row, aborting.`);
+						return '';
+					}
 				} else {
 					console.error('An unknown error has occurred', err);
 					return '';
@@ -121,8 +127,6 @@ class CurrencyPricingRunner {
 			prices = this.priceCache;
 		} else {
 			try {
-				console.log(`Fetching ratios for ${this.currency}...`);
-
 				prices = await fetchers.reduce((promiseChain, fetcher) => {
 					return promiseChain.then(chainResults =>
 						fetcher.go().then(currentResult =>
@@ -197,6 +201,14 @@ class CurrencyPricingRunner {
 		const buyRatio = chaosToCurrency.buyPrices[row] / chaosToCurrency.sellPrices[row];
 		const profit = Math.round((sellRatio / buyRatio - 1) * 100);
 
+		// if (row === 0 && CurrencyPricings.DEBUG) {
+		// 	console.log('getPriceInfo');
+		// 	console.log(currencyToChaos.sellPrices[row], currencyToChaos.buyPrices[row]);
+		// 	console.log(chaosToCurrency.buyPrices[row], chaosToCurrency.sellPrices[row]);
+		// 	console.log(profit);
+		// 	console.log('\n');
+		// }
+
 		const info = {
 			sell: '',
 			buy: '',
@@ -204,12 +216,12 @@ class CurrencyPricingRunner {
 		};
 
 		const sellMaxDivisible = this.gcd(currencyToChaos.buyPrices[row], currencyToChaos.sellPrices[row]);
-		info.sell = `${currencyToChaos.buyPrices[row]}/${currencyToChaos.sellPrices[row]}`
-		info.sell += ` (${currencyToChaos.buyPrices[row] / sellMaxDivisible}/${currencyToChaos.sellPrices[row] / sellMaxDivisible})`;
+		info.sell = `${currencyToChaos.sellPrices[row]}/${currencyToChaos.buyPrices[row]}`
+		info.sell += ` (${currencyToChaos.sellPrices[row] / sellMaxDivisible}/${currencyToChaos.buyPrices[row] / sellMaxDivisible})`;
 
 		const buyMaxDivisible = this.gcd(chaosToCurrency.buyPrices[row], chaosToCurrency.sellPrices[row]);
-		info.buy = `${chaosToCurrency.buyPrices[row]}/${chaosToCurrency.sellPrices[row]}`;
-		info.buy += ` (${chaosToCurrency.buyPrices[row] / buyMaxDivisible}/${chaosToCurrency.sellPrices[row] / buyMaxDivisible})`;
+		info.buy = `${chaosToCurrency.sellPrices[row]}/${chaosToCurrency.buyPrices[row]}`;
+		info.buy += ` (${chaosToCurrency.sellPrices[row] / buyMaxDivisible}/${chaosToCurrency.buyPrices[row] / buyMaxDivisible})`;
 
 		return info;
 	}
@@ -234,6 +246,7 @@ class CurrencyPriceFetcher {
 	}
 
 	async go() {
+		console.log(`Fetching ratios for ${ this.want } < ${ this.have }...`);
 
 		const search = {
 			exchange: {
@@ -248,6 +261,7 @@ class CurrencyPriceFetcher {
 		let notes;
 		let rowsData;
 		let lastPriceResult;
+		let listingsRateLimitEnd;
 		try {
 			const listingsResult = await axios.post(
 				`https://www.pathofexile.com/api/trade/exchange/${ CurrencyPricings.LEAGUE }`,
@@ -261,10 +275,8 @@ class CurrencyPriceFetcher {
 			);
 			let {data: {id, result: rows}} = listingsResult;
 
-			// Throttle next API call
-			let limit = this.parseRateLimit(listingsResult);
-			if (limit.num === 1)
-				await this.throttle(limit.per);
+			const limit = this.parseRateLimit(listingsResult)
+			listingsRateLimitEnd = performance.now() + (limit.num === 1 ? (limit.per * 1000) : 0);
 
 			const rowRequests = [];
 			const pages = Math.min(Math.floor(rows.length / 20) + 1, 3);
@@ -275,31 +287,23 @@ class CurrencyPriceFetcher {
 
 			const rowResults = [];
 			for (let i = 0; i < rowRequests.length; i++) {
-				let priceResult = await axios.get(rowRequests[i]);
-				rowResults.push(priceResult);
+				console.log(`Fetching page ${i + 1} of ${rowRequests.length}`);
+				let rowResult = await axios.get(rowRequests[i]);
+				rowResults.push(rowResult);
 
 				if (i === rowRequests.length - 1)
-					lastPriceResult = priceResult;
-				else {
-					// Throttle next API call
-					let limit = this.parseRateLimit(priceResult);
-					if (limit.num === 1)
-						await this.throttle(limit.per);
-				}
+					lastPriceResult = rowResult;
+				else
+					await this.waitIfRateLimited(rowResult);
 			}
 
-			rowsData = rowResults.map(r => r.data).map(rd => rd.result).flat();
+			rowsData = rowResults.map(rr => rr.data).map(rr => rr.result).flat().filter(rr => !!rr);
 			notes = rowsData.map(rd => rd.item.note).filter(n => !!n);
 		} catch (err) {
-			if (err.response && err.response.status === 429) {
-				console.error('err.response.status === 429', err);
-				throw new Error({
-					reason: 'rate limit',
-					limit: this.parseRateLimit(err)
-				});
-			} else {
-				throw new Error('unknown');
-			}
+			if (err.response && (err.response.status === 429 || err.response.status === 404)) {
+				throw new Error('request error');
+			} else
+				throw err;
 		}
 
 		const result = {
@@ -310,23 +314,23 @@ class CurrencyPriceFetcher {
 		const matchReg = /([0-9]+)\/([0-9]+)/;
 		notes.forEach(n => {
 			const matches = n.match(matchReg);
-			if (matches) {
+			if (n.indexOf('b/o') === -1 && matches) {
 				result.sellPrices.push(+matches[1]);
 				result.buyPrices.push(+matches[2]);
 			}
 		});
 
 		if (!this.lastRun) {
-			const limit = this.parseRateLimit(lastPriceResult)
-			if (limit.num === 1)
-				await this.throttle(limit.per);
+			const lastRunRateLimit = this.parseRateLimit(lastPriceResult);
+			const lastRunWait = lastRunRateLimit.num === 1 ? lastRunRateLimit.per * 1000 : 0;
+			const listingRateLimitMsLeft = listingsRateLimitEnd - performance.now();
+			await this.sleep(Math.max(lastRunWait, listingRateLimitMsLeft));
 		}
 
 		return result;
 	}
 
 	parseRateLimit(result) {
-
 		const limits = result.headers['x-rate-limit-ip-state'].split(',');
 		const baseLimit = limits[0].split(':');
 		return {
@@ -334,12 +338,18 @@ class CurrencyPriceFetcher {
 			per: +baseLimit[1],
 			throttle: +baseLimit[2]
 		}
-		// '1:4:0,1:12:228',
 	}
 
-	async throttle(s) {
-		console.log('...Waiting ' + s + ' seconds.');
-		await new Promise(resolve => setTimeout(resolve, s * 1000));
+	async waitIfRateLimited(result) {
+		const limit = this.parseRateLimit(result)
+		if (limit.num === 1)
+			await this.sleep(limit.per * 1000);
+	}
+
+	async sleep(ms) {
+		if (ms > 10000 || CurrencyPricings.DEBUG)
+			console.log('Rate limited, waiting ' + (ms/1000) + ' seconds.');
+		await new Promise(resolve => setTimeout(resolve, ms));
 	}
 }
 

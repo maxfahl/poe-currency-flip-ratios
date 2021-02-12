@@ -4,10 +4,8 @@ A node script for helping with currency flipping. It scrapes the pathofexile tra
 
 #### Prerequisites:
 - Node JS
-- Chrome (version 88)
 
-Install: `yarn install / npm install`
-
+Install: `yarn install / npm install`  
 Run: `node ./poe-currency-pricings.js ...args`
 
 #### Args:
@@ -16,55 +14,35 @@ Run: `node ./poe-currency-pricings.js ...args`
 - `--startrow=STARTROW` The row we will start looking for prices on, defaults to 0,
 - `--numrows=NUMROWS` The maximum number of rows from the startrow we will parse, defaults to 40.
 - `--offline` Will not get prices from site, instead uses a local cache.
-- `--debug` Don't run Chrome in headless mode.
+- `--debug` More verbose logging.
 
 #### Example:
-`node ./poe-currency-pricings.js --currencies=chromatic,cartographer,fusing --profit=10 --startrow=10 --numrows=15`
+`node ./poe-currency-pricings.js --currencies=vaal,chrome,fusing,chisel --profit=10 --startrow=10 --numrows=15`
 
 #### Supported currencies:
 
-- alchemy
-- alteration
-- annulment
-- augmentation
-- blessed
-- cartographer
-- chance
-- chromatic
-- divine
-- exalted
-- fusing
-- gemcutter
-- glassblower
-- jeweller
-- regal
-- regret
-- scour
-- transmutation
-- vaal
-
-Other currencies can be added at the top of the script, the first string is the trade link suffix for the currency you want to sell, the other is for when you want to buy that same currency for chaos.
+Every currency listed [here](https://www.pathofexile.com/trade/about) is supported. Use tho short variation of the currency name with the script, for example, use "chrome", not "Chromatic Orb".
 
 #### Result example:
 
 ```
-chromatic > chaos
-100/690 (10/69)
-chaos > chromatic
-370/51 (370/51)
-Profit: 5% (~row 23)
+vaal > chaos
+60/100 (3/5)
+chaos > vaal
+38/20 (19/10)
+Profit: 14% (~row 20)
 
-divine > chaos
-9/1 (9/1)
-chaos > divine
-10/86 (5/43)
-Profit: 5% (~row 23)
+chrome > chaos
+14/97 (14/97)
+chaos > chrome
+235/30 (47/6)
+Profit: 13% (~row 24)
 ```
 
-"chromatic > chaos 100/690" means that you should price a chromatic in your premium stash tab "100/690" of a chaos. "chaos > chromatic 370/51" mean you should price a chaos for "370/51" of a chromatic. All trades will give a profit margin for that trade, as well as an expected position. The numbers in parentheses is the maximum common divisible for that ratio, 10/69 is the same ratio as 100/690, but you will sell 69 chromatics for 10 chaos, instead of 690 chromatics for 100 chaos, which can result in more trade requests, but make less money per trade.
+"vaal > chaos 60/100" means that you should price a vaal in your premium stash tab "60/100" of a chaos. "chaos > vaal 38/20" mean you should price a chaos for "38/20" of a vaal. All trades will give a profit margin for that trade, as well as an expected position in the listings. The numbers in parentheses is the maximum common divisible for that ratio, 3/5 is the same ratio as 60/100, but you will sell 5 vaal for 3 chaos, instead of 100 vaal for 60 chaos, which can result in more trade requests, but make less money per trade.
 
 #### Caveats
 
-- Offline mode cannot calculate ratios for more rows than the previously non-offline did (startrow + numrows).
+- Offline mode can only calculate ratios for currencies that you've fetched prices for in online mode before, and will be based on what the prices looked like at that moment in time.
 
 ##### Thanks, let me know how it works for you!
