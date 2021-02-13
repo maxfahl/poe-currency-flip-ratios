@@ -69,8 +69,6 @@ class CurrencyPricings {
 				result = await currentRunner.go(this.currentRunner === this.runners.length - 1);
 				this.retryCount = 0;
 			} catch (err) {
-				this.logError(err);
-
 				if (err.message === 'request-error') {
 					if (this.retryCount < 3) {
 						this.retryCount++;
@@ -86,6 +84,7 @@ class CurrencyPricings {
 					}
 				} else if (err.message !== 'no-listings') {
 					console.error('An unknown error has occurred', err);
+					CurrencyPricings.logError(err);
 					return '';
 				}
 			}
@@ -101,10 +100,10 @@ class CurrencyPricings {
 		return this.priceNext();
 	}
 
-	logError(err) {
+	static logError(err) {
 		const d = new Date();
 		let msg = `${d.toLocaleDateString()} ${d.toLocaleTimeString()}\n`;
-		msg += `${err.toString()}\n\n`;
+		msg += `${err}\n\n`;
 		fs.appendFileSync('error.log', msg);
 	}
 }
@@ -306,6 +305,7 @@ class CurrencyPriceFetcher {
 			rowsData = rowResults.map(rr => rr.data).map(rr => rr.result).flat().filter(rr => !!rr);
 			notes = rowsData.map(rd => rd.item.note).filter(n => !!n);
 		} catch (err) {
+			CurrencyPricings.logError(err);
 			if (err.response && (err.response.status === 429 || err.response.status === 404)) {
 				throw new Error('request-error');
 			} else {

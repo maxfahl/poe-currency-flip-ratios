@@ -4,3 +4,4 @@ node_modules
 
 price-cache.json
 result.txt
+error.log
