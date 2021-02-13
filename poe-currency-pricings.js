@@ -82,6 +82,8 @@ class CurrencyPricings {
 					} else {
 						console.error(`Failed 3 times in a row, skipping ${currentRunner.currency}.`);
 					}
+				} else if (err.message === 'not-enough-rows') {
+					console.error(`Not enough rows to get ratios from, try with a lower startrow value, skipping ${currentRunner.currency}.`);
 				} else if (err.message !== 'no-listings') {
 					console.error('An unknown error has occurred', err);
 					CurrencyPricings.logError(err);
@@ -154,6 +156,9 @@ class CurrencyPricingRunner {
 			prices[1].sellPrices.length,
 			prices[1].buyPrices.length
 		);
+		if (this.startrow > totalNumPrices - 1) {
+			throw new Error('not-enough-rows');
+		}
 		let startRow = this.startrow < totalNumPrices ? this.startrow : totalNumPrices - 1;
 		let endRow = Math.min(this.numrows ? startRow + this.numrows : totalNumPrices - 1, totalNumPrices - 1);
 
@@ -321,7 +326,7 @@ class CurrencyPriceFetcher {
 		const matchReg = /([0-9]+)\/?([0-9]+)?/;
 		notes.forEach(n => {
 			const matches = n.match(matchReg);
-			if (n.indexOf('b/o') === -1 && matches) {
+			if (/*n.indexOf('b/o') === -1 && */matches) {
 				if (matches[1] && matches[2]) {
 					result.sellPrices.push(+matches[1]);
 					result.buyPrices.push(+matches[2]);
