@@ -102,7 +102,7 @@ class CurrencyPricings {
 	}
 
 	logError(err) {
-		cont d = new Date();
+		const d = new Date();
 		let msg = `${d.toLocaleDateString()} ${d.toLocaleTimeString()}\n`;
 		msg += `${err.toString()}\n\n`;
 		fs.appendFileSync('error.log', msg);
