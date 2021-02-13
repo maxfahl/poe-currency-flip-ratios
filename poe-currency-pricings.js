@@ -83,7 +83,6 @@ class CurrencyPricings {
 						});
 					} else {
 						console.error(`Failed 3 times in a row, skipping ${currentRunner.currency}.`);
-						await fs.writeFileSync('price-cache.json', JSON.stringify(this.priceCache));
 					}
 				} else if (err.message !== 'no-listings') {
 					console.error('An unknown error has occurred', err);
