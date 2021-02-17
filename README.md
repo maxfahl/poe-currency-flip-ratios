@@ -1,6 +1,6 @@
 # PoE Currency Flip Ratios
 
-##### A node script for helping with currency flipping that loads listings from the PoE JSON REST API and finds good sell/buy ratios.
+##### A node script that helps finding good sell/buy ratios for currency flipping via the PoE JSON REST API.
 
 #### Prerequisites
 - Node JS

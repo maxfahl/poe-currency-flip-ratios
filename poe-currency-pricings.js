@@ -69,22 +69,24 @@ class CurrencyPricings {
 				result = await currentRunner.go(this.currentRunner === this.runners.length - 1);
 				this.retryCount = 0;
 			} catch (err) {
-				if (err.message === 'request error') {
-					this.retryCount++;
-					if (this.retryCount < 6) {
+				if (err.message === 'request-error') {
+					if (this.retryCount < 3) {
+						this.retryCount++;
 						console.error(`Something went wrong, trying again in 20 seconds (${this.retryCount}).`);
 						return new Promise(resolve => {
 							setTimeout(
 								() => resolve(this.priceNext()),
 								20000
-							); // Try again in a minute
+							);
 						});
 					} else {
-						console.error(`Failed 5 times in a row, aborting.`, err);
-						return '';
+						console.error(`Failed 3 times in a row, skipping ${currentRunner.currency}.`);
 					}
+				} else if (err.message === 'not-enough-rows') {
+					console.error(`Not enough rows to get ratios from, try with a lower startrow value, skipping ${currentRunner.currency}.`);
 				} else if (err.message !== 'no-listings') {
 					console.error('An unknown error has occurred', err);
+					CurrencyPricings.logError(err);
 					return '';
 				}
 			}
@@ -98,6 +100,13 @@ class CurrencyPricings {
 		}
 		this.currentRunner++;
 		return this.priceNext();
+	}
+
+	static logError(err) {
+		const d = new Date();
+		let msg = `${d.toLocaleDateString()} ${d.toLocaleTimeString()}\n`;
+		msg += `${err}\n\n`;
+		fs.appendFileSync('error.log', msg);
 	}
 }
 
@@ -147,6 +156,9 @@ class CurrencyPricingRunner {
 			prices[1].sellPrices.length,
 			prices[1].buyPrices.length
 		);
+		if (this.startrow > totalNumPrices - 1) {
+			throw new Error('not-enough-rows');
+		}
 		let startRow = this.startrow < totalNumPrices ? this.startrow : totalNumPrices - 1;
 		let endRow = Math.min(this.numrows ? startRow + this.numrows : totalNumPrices - 1, totalNumPrices - 1);
 
@@ -300,8 +312,9 @@ class CurrencyPriceFetcher {
 			rowsData = rowResults.map(rr => rr.data).map(rr => rr.result).flat().filter(rr => !!rr);
 			notes = rowsData.map(rd => rd.item.note).filter(n => !!n);
 		} catch (err) {
+			CurrencyPricings.logError(err);
 			if (err.response && (err.response.status === 429 || err.response.status === 404)) {
-				throw new Error('request error');
+				throw new Error('request-error');
 			} else {
 				throw err;
 			}
@@ -315,7 +328,7 @@ class CurrencyPriceFetcher {
 		const matchReg = /([0-9]+)\/?([0-9]+)?/;
 		notes.forEach(n => {
 			const matches = n.match(matchReg);
-			if (n.indexOf('b/o') === -1 && matches) {
+			if (/*n.indexOf('b/o') === -1 && */matches) {
 				if (matches[1] && matches[2]) {
 					result.sellPrices.push(+matches[1]);
 					result.buyPrices.push(+matches[2]);
