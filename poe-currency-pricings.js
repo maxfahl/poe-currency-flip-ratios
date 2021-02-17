@@ -190,7 +190,7 @@ class CurrencyPricingRunner {
 		}
 
 		let info = '';
-		if (priceInfo.profit < 0) {
+		if (priceInfo.profit <= 0) {
 			info += `\nCould not find any profitable ratios for "${ this.currency }, skipping..."`;
 		} else {
 			info += `\n${this.currency} > chaos\n`;
