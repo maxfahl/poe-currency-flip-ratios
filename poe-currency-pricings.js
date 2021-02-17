@@ -199,7 +199,7 @@ class CurrencyPricingRunner {
 			info += `${priceInfo.buy}\n`;
 			info += `Profit: ${priceInfo.profit}% (~row ${this.startrow + rowNum + 1})`;
 			if (noProfitBelow)
-				info += `\n(Could not find row pairs matching a profit of ${this.profit}%)`;
+				info += `\n(Could not find ratios matching a profit lower or equal to ${this.profit}%)`;
 		}
 
 		return {
