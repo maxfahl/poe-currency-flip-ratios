@@ -177,16 +177,18 @@ class CurrencyPricingRunner {
 			priceInfo = this.getPriceInfo(currencyToChaosPrices, chaosToCurrencyPrices, 0)
 		}
 
-		let info = `\n${this.currency} > chaos\n`;
-		info += `${priceInfo.sell}\n`;
-		info += `chaos > ${this.currency}\n`;
-		info += `${priceInfo.buy}\n`;
-		if (priceInfo.profit < 1)
-			info += `${priceInfo.profit === 0 ? 'No' : 'Negative'} profit: ${priceInfo.profit}%`;
-		else
+		let info = '';
+		if (priceInfo.profit < 0) {
+			info += `\nCould not find any profitable ratios for "${ this.currency }, skipping..."`;
+		} else {
+			info += `\n${this.currency} > chaos\n`;
+			info += `${priceInfo.sell}\n`;
+			info += `chaos > ${this.currency}\n`;
+			info += `${priceInfo.buy}\n`;
 			info += `Profit: ${priceInfo.profit}% (~row ${this.startrow + rowNum + 1})`;
-		if (noProfitBelow)
-			info += `\n(Could not find row pairs matching a profit of ${this.profit}%)`;
+			if (noProfitBelow)
+				info += `\n(Could not find row pairs matching a profit of ${this.profit}%)`;
+		}
 
 		return {
 			info,
