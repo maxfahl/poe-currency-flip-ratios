@@ -379,7 +379,7 @@ class CurrencyPriceFetcher {
 }
 
 (async () => {
-	let {league = 'Ritual', currencies, profit = 10, startrow = 0, numrows = 40, debug, offline} = yargs(hideBin(process.argv)).argv
+	let {league = 'Ultimatum', currencies, profit = 10, startrow = 0, numrows = 40, debug, offline} = yargs(hideBin(process.argv)).argv
 
 	if (startrow > 0)
 		startrow = startrow - 1;
