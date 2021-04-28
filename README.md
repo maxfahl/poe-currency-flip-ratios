@@ -11,6 +11,7 @@ Run: `node ./poe-currency-pricings.js ...args`
 #### Arguments
 | Argument | Value | Explanation | Default
 --- | --- | --- | ---
+| league | string | The league to get currency ratios for | Ultimatum
 | currencies | comma separated list of strings | A comma separated list of currencies. |
 | profit | number | Desired profit margin (optional) | 10
 | startrow | number | The row we will start looking for prices on (optional) | 0
