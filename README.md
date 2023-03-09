@@ -1,5 +1,9 @@
 # PoE Currency Flip Ratios
 
+## NOTICE
+
+I have abandoned this script since the trade API is no longer publicly accessible. That means a script such as this don't work anymore. You'd have to register for a sort of developer account with GGG, and I don't want to risk anything since this script might be seen as a cheat. Thanks to all of you who tried it out. Will probably remove this repo in the coming weeks.
+
 ##### A node script that helps finding good sell/buy ratios for currency flipping via the PoE JSON REST API.
 
 #### Prerequisites
